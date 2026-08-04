@@ -12,21 +12,20 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 70 : 64,
-          paddingHorizontal: 8,
+          height: Platform.OS === 'ios' ? 76 : 68,
+          paddingHorizontal: 6,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 20 : 14,
-          left: 16,
-          right: 16,
-          borderRadius: 36,
+          bottom: Platform.OS === 'ios' ? 24 : 16,
+          left: 12,
+          right: 12,
+          borderRadius: 40,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 6 },
+          shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.1,
-          shadowRadius: 14,
-          elevation: 8,
+          shadowRadius: 16,
+          elevation: 10,
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
         },
       }}
     >
@@ -35,9 +34,9 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.activeTabPill]}>
+            <View style={[styles.tabWrapper, focused && styles.activePill]}>
               <Home size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
                 Home
               </Text>
             </View>
@@ -49,9 +48,9 @@ export default function TabLayout() {
         options={{
           title: 'Projects',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.activeTabPill]}>
+            <View style={[styles.tabWrapper, focused && styles.activePill]}>
               <ClipboardList size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
                 Projects
               </Text>
             </View>
@@ -63,9 +62,9 @@ export default function TabLayout() {
         options={{
           title: 'Calendar',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.activeTabPill]}>
+            <View style={[styles.tabWrapper, focused && styles.activePill]}>
               <Calendar size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
                 Calendar
               </Text>
             </View>
@@ -77,9 +76,9 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.activeTabPill]}>
+            <View style={[styles.tabWrapper, focused && styles.activePill]}>
               <User size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
                 Profile
               </Text>
             </View>
@@ -97,29 +96,28 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabItem: {
-    flex: 1,
-    flexDirection: 'column',
+  tabWrapper: {
+    width: '100%',
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    borderRadius: 28,
-    marginHorizontal: 2,
+    borderRadius: 26,
+    paddingHorizontal: 2,
   },
-  activeTabPill: {
+  activePill: {
     backgroundColor: '#12131A',
-    paddingVertical: 8,
-    borderRadius: 28,
+    borderRadius: 26,
   },
-  tabLabel: {
+  label: {
     fontSize: 10,
     fontWeight: '700',
     marginTop: 2,
+    textAlign: 'center',
   },
-  activeTabLabel: {
+  activeText: {
     color: '#FFFFFF',
   },
-  inactiveTabLabel: {
+  inactiveText: {
     color: '#12131A',
   },
 });

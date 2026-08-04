@@ -69,6 +69,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ...plan, tasks: updatedTasks };
       });
 
+      // Check completed tasks for current day
+      const currentDayPlan = updatedPlans.find((p) => p.dayNumber === currentDay);
+      const currentDayCompletedCount = currentDayPlan
+        ? currentDayPlan.tasks.filter((t) => t.isCompleted).length
+        : 0;
+
       setUserStats((prev) => {
         const pointDiff = taskWasCompleted ? 10 : -10;
         const countDiff = taskWasCompleted ? 1 : -1;
@@ -76,11 +82,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const newCompletedCount = Math.max(0, prev.completedTasksCount + countDiff);
         const newSolved = taskWasCompleted ? prev.solvedProblems + 1 : Math.max(0, prev.solvedProblems - 1);
 
+        // Update streak if at least 2 tasks of the day are completed
+        const updatedStreak = currentDayCompletedCount >= 2
+          ? Math.max(prev.currentStreak, 1)
+          : (currentDayCompletedCount === 0 ? 0 : prev.currentStreak);
+
         // Sync with InsForge Backend
         syncTaskCompletionToInsForge(taskId, taskWasCompleted, newTotalPoints);
 
         return {
           ...prev,
+          currentStreak: updatedStreak,
+          bestStreak: Math.max(prev.bestStreak, updatedStreak),
           totalPoints: newTotalPoints,
           completedTasksCount: newCompletedCount,
           solvedProblems: newSolved,
