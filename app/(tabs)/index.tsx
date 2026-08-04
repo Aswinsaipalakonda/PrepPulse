@@ -57,7 +57,7 @@ export default function TodayScreen() {
           <Text style={styles.progressCardTitle}>Today's Progress</Text>
         </View>
         <View style={styles.progressCardBody}>
-          <ProgressRing percentage={completionPercentage} size={110} strokeWidth={10} color="#9333EA" />
+          <ProgressRing percentage={completionPercentage} size={110} strokeWidth={10} color="#EAB308" />
 
           <View style={styles.statsColumn}>
             <View style={styles.statRow}>
