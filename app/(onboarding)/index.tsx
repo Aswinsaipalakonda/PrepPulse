@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import {
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../context/AppContext';
@@ -27,13 +30,19 @@ import {
 
 const { width } = Dimensions.get('window');
 
+// Preload all onboarding background images locally into memory for zero loading delay
+const BG_STUDY = require('../../assets/study-bg.png');
+const BG_DSA = require('../../assets/dsa-bg.png');
+const BG_DEV = require('../../assets/dev-bg.png');
+const BG_INTERVIEW = require('../../assets/interview-bg.png');
+
 const ONBOARDING_SLIDES = [
   {
     id: 'slide-1',
     type: 'input',
     title: 'Welcome to PrepPulse!',
     subtitle: 'Enter your name to personalize your 90-day placement dashboard',
-    bg: require('../../assets/study-bg.png'),
+    bg: BG_STUDY,
     icon: User,
   },
   {
@@ -46,7 +55,7 @@ const ONBOARDING_SLIDES = [
     badge: 'DSA Track',
     badgeBg: '#FCE7F3',
     badgeColor: '#BE185D',
-    bg: require('../../assets/dsa-bg.png'),
+    bg: BG_DSA,
     icon: Code2,
   },
   {
@@ -59,7 +68,7 @@ const ONBOARDING_SLIDES = [
     badge: 'Web Development',
     badgeBg: '#FEF3C7',
     badgeColor: '#B45309',
-    bg: require('../../assets/dev-bg.png'),
+    bg: BG_DEV,
     icon: Terminal,
   },
   {
@@ -72,7 +81,7 @@ const ONBOARDING_SLIDES = [
     badge: 'Interview Prep',
     badgeBg: '#ECFDF5',
     badgeColor: '#047857',
-    bg: require('../../assets/interview-bg.png'),
+    bg: BG_INTERVIEW,
     icon: Brain,
   },
   {
@@ -85,7 +94,7 @@ const ONBOARDING_SLIDES = [
     badge: '90-Day Plan',
     badgeBg: '#EFF6FF',
     badgeColor: '#1D4ED8',
-    bg: require('../../assets/study-bg.png'),
+    bg: BG_STUDY,
     icon: Calendar,
   },
 ];
@@ -99,7 +108,15 @@ export default function OnboardingScreen() {
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
 
+  // Pre-warm local asset images so slides transition instantaneously
+  useEffect(() => {
+    [BG_STUDY, BG_DSA, BG_DEV, BG_INTERVIEW].forEach((imageAsset) => {
+      Image.prefetch(Image.resolveAssetSource(imageAsset).uri);
+    });
+  }, []);
+
   const handleNext = () => {
+    Keyboard.dismiss();
     if (currentIndex < ONBOARDING_SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
     } else {
@@ -118,50 +135,60 @@ export default function OnboardingScreen() {
       <ImageBackground source={item.bg} style={styles.slideBgImage} resizeMode="cover">
         <View style={styles.slideOverlay} />
 
-        <View style={styles.slideContent}>
-          {item.type === 'input' ? (
-            <View style={styles.inputSlideContainer}>
-              {/* App Brand Logo Badge on Slide 1 */}
-              <View style={styles.brandLogoBadge}>
-                <Image
-                  source={require('../../assets/logo-without-bg.png')}
-                  style={styles.brandLogoImg}
-                />
-              </View>
-
-              <Text style={styles.slideTitle}>{item.title}</Text>
-              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-
-              <View style={styles.inputCard}>
-                <Text style={styles.inputLabel}>Your Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={nameInput}
-                  onChangeText={setNameInput}
-                  placeholder="e.g. Aswin Sai"
-                  placeholderTextColor="#9CA3AF"
-                  autoCapitalize="words"
-                />
-              </View>
-            </View>
-          ) : (
-            <View style={styles.highlightSlideContainer}>
-              {item.badge && (
-                <View style={[styles.badge, { backgroundColor: item.badgeBg }]}>
-                  <Text style={[styles.badgeText, { color: item.badgeColor }]}>{item.badge}</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.slideContentScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {item.type === 'input' ? (
+              <View style={styles.inputSlideContainer}>
+                {/* Brand Logo Badge */}
+                <View style={styles.brandLogoBadge}>
+                  <Image
+                    source={require('../../assets/logo-without-bg.png')}
+                    style={styles.brandLogoImg}
+                  />
                 </View>
-              )}
 
-              <View style={styles.iconCircle}>
-                <IconComponent size={36} color="#EAB308" />
+                <Text style={styles.slideTitle}>{item.title}</Text>
+                <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+
+                <View style={styles.inputCard}>
+                  <Text style={styles.inputLabel}>Your Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={nameInput}
+                    onChangeText={setNameInput}
+                    placeholder="e.g. Aswin Sai"
+                    placeholderTextColor="#9CA3AF"
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
+                </View>
               </View>
+            ) : (
+              <View style={styles.highlightSlideContainer}>
+                {item.badge && (
+                  <View style={[styles.badge, { backgroundColor: item.badgeBg }]}>
+                    <Text style={[styles.badgeText, { color: item.badgeColor }]}>
+                      {item.badge}
+                    </Text>
+                  </View>
+                )}
 
-              <Text style={styles.slideTitle}>{item.title}</Text>
-              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-              <Text style={styles.slideDescription}>{item.description}</Text>
-            </View>
-          )}
-        </View>
+                <View style={styles.iconCircle}>
+                  <IconComponent size={36} color="#EAB308" />
+                </View>
+
+                <Text style={styles.slideTitle}>{item.title}</Text>
+                <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+                <Text style={styles.slideDescription}>{item.description}</Text>
+              </View>
+            )}
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </ImageBackground>
     );
   };
@@ -169,7 +196,7 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Top Header */}
       <View style={styles.topHeader}>
@@ -185,7 +212,7 @@ export default function OnboardingScreen() {
         </Text>
       </View>
 
-      {/* Smooth Horizontal Carousel with Image Backgrounds */}
+      {/* Instant pre-loaded Slide Carousel */}
       <FlatList
         ref={flatListRef}
         data={ONBOARDING_SLIDES}
@@ -194,6 +221,7 @@ export default function OnboardingScreen() {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
           useNativeDriver: false,
         })}
@@ -203,9 +231,8 @@ export default function OnboardingScreen() {
         }}
       />
 
-      {/* Footer Navigation */}
+      {/* Bottom Sticky Action Footer */}
       <View style={styles.footerContainer}>
-        {/* Pagination Dots */}
         <View style={styles.paginationRow}>
           {ONBOARDING_SLIDES.map((_, idx) => {
             const isSelected = currentIndex === idx;
@@ -213,7 +240,6 @@ export default function OnboardingScreen() {
           })}
         </View>
 
-        {/* Action Button */}
         <TouchableOpacity activeOpacity={0.85} style={styles.nextBtn} onPress={handleNext}>
           <Text style={styles.nextBtnText}>
             {currentIndex === ONBOARDING_SLIDES.length - 1 ? 'Go to Home Dashboard' : 'Next'}
@@ -264,20 +290,20 @@ const styles = StyleSheet.create({
   slideBgImage: {
     width: width,
     height: '100%',
-    justifyContent: 'center',
   },
   slideOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(9, 10, 15, 0.65)',
   },
-  slideContent: {
-    flex: 1,
+  slideContentScroll: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 28,
+    paddingTop: 80,
+    paddingBottom: 140,
   },
   inputSlideContainer: {
     alignItems: 'center',
-    marginTop: 40,
   },
   brandLogoBadge: {
     width: 80,
@@ -297,7 +323,6 @@ const styles = StyleSheet.create({
   },
   highlightSlideContainer: {
     alignItems: 'center',
-    marginTop: 40,
   },
   badge: {
     paddingHorizontal: 14,
