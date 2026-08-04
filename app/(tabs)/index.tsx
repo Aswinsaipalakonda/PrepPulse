@@ -6,7 +6,7 @@ import { TaskCard } from '../../components/TaskCard';
 import { HeaderStats } from '../../components/HeaderStats';
 import { Bell, Plus, Calendar as CalendarIcon } from 'lucide-react-native';
 export default function TodayScreen() {
-  const { dayPlans, currentDay, toggleTaskCompletion } = useAppStore();
+  const { dayPlans, currentDay, userName, toggleTaskCompletion } = useAppStore();
   const [filter, setFilter] = useState<'all' | 'todo' | 'completed'>('all');
 
   const todayPlan = dayPlans.find((p) => p.dayNumber === currentDay) || dayPlans[0];
@@ -22,8 +22,6 @@ export default function TodayScreen() {
     if (filter === 'completed') return task.isCompleted;
     return true;
   });
-
-  const userName = 'Olivia';
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>

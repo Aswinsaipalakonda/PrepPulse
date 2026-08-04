@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { resetProgram } = useAppStore();
+  const { userName, resetProgram } = useAppStore();
 
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
@@ -31,11 +31,11 @@ export default function ProfileScreen() {
       {/* User Card */}
       <View style={styles.userCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>O</Text>
+          <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>Olivia Reed</Text>
-          <Text style={styles.userEmail}>olivia.placement@gmail.com</Text>
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userEmail}>{userName.toLowerCase().replace(/\s+/g, '')}.placement@gmail.com</Text>
         </View>
       </View>
 

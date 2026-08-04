@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ImageBackground, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react-native';
+import { ShieldCheck, Sparkles } from 'lucide-react-native';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleContinue = () => {
-    router.replace('/(onboarding)');
+  const handleGoogleAuth = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      router.replace('/(onboarding)');
+    }, 600);
   };
 
   return (
@@ -17,61 +20,37 @@ export default function SignInScreen() {
       <ImageBackground source={require('../../assets/study-bg.png')} style={styles.bgImage} resizeMode="cover">
         <View style={styles.overlay} />
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.welcomeTitle}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to track your 90-day placement preparation</Text>
-
-          {/* Email input */}
-          <View style={styles.inputCard}>
-            <Mail size={20} color="#9CA3AF" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Your Email"
-              placeholderTextColor="#9CA3AF"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+        <View style={styles.content}>
+          {/* Logo Card */}
+          <View style={styles.logoBadge}>
+            <Image source={require('../../assets/logo-without-bg.png')} style={styles.logoImg} />
           </View>
 
-          {/* Password input */}
-          <View style={styles.inputCard}>
-            <Lock size={20} color="#9CA3AF" />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Your Password"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+          <Text style={styles.welcomeTitle}>Sign In to PrepPulse</Text>
+          <Text style={styles.subtitle}>
+            One click to synchronize your 90-day placement roadmap, streaks, and project workspace.
+          </Text>
 
-          <View style={styles.rememberRow}>
-            <Text style={styles.rememberText}>Remember me</Text>
-            <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Main Log In Button */}
-          <TouchableOpacity activeOpacity={0.85} style={styles.loginBtn} onPress={handleContinue}>
-            <Text style={styles.loginBtnText}>Log In</Text>
+          {/* Clean Google Only Auth Button */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.googleBtn}
+            onPress={handleGoogleAuth}
+            disabled={isLoading}
+          >
+            <View style={styles.googleIconContainer}>
+              <Text style={styles.googleG}>G</Text>
+            </View>
+            <Text style={styles.googleText}>
+              {isLoading ? 'Connecting Google Account...' : 'Continue with Google'}
+            </Text>
           </TouchableOpacity>
 
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Or Continue with</Text>
-            <View style={styles.dividerLine} />
+          <View style={styles.securityRow}>
+            <ShieldCheck size={16} color="#9CA3AF" />
+            <Text style={styles.securityText}>Secured by Google OAuth & InsForge Auth</Text>
           </View>
-
-          {/* Google Auth Button */}
-          <TouchableOpacity activeOpacity={0.85} style={styles.googleBtn} onPress={handleContinue}>
-            <Text style={styles.googleG}>G</Text>
-            <Text style={styles.googleText}>Google</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        </View>
       </ImageBackground>
     </View>
   );
@@ -80,7 +59,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090A0F',
+    backgroundColor: '#12131A',
   },
   bgImage: {
     width: '100%',
@@ -88,108 +67,87 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 10, 15, 0.88)',
+    backgroundColor: 'rgba(18, 19, 26, 0.88)',
   },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 90,
-    paddingBottom: 40,
-    flexGrow: 1,
+  content: {
+    flex: 1,
+    paddingHorizontal: 28,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoBadge: {
+    width: 100,
+    height: 100,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  logoImg: {
+    width: 72,
+    height: 72,
+    resizeMode: 'contain',
   },
   welcomeTitle: {
     fontSize: 32,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 10,
+    textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
     color: '#9CA3AF',
-    marginBottom: 32,
-  },
-  inputCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    height: 56,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    gap: 12,
-  },
-  input: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 15,
-  },
-  rememberRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  rememberText: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
-  forgotText: {
-    fontSize: 13,
-    color: '#A78BFA',
-    fontWeight: '600',
-  },
-  loginBtn: {
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-  },
-  loginBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    color: '#6B7280',
-    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 44,
+    maxWidth: '90%',
   },
   googleBtn: {
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: '100%',
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 12,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  googleIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   googleG: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
     color: '#4285F4',
   },
   googleText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+    color: '#12131A',
+    fontSize: 16,
     fontWeight: '700',
+  },
+  securityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  securityText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
 });

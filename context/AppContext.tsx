@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Task, DayPlan, FYPMilestone, UserStats } from '../types/planner';
 import { SEEDED_90_DAYS, INITIAL_FYP_MILESTONES, INITIAL_USER_STATS } from '../constants/curriculum';
 import * as Haptics from 'expo-haptics';
@@ -6,6 +6,8 @@ import * as Haptics from 'expo-haptics';
 interface AppContextType {
   currentDay: number;
   setCurrentDay: (day: number) => void;
+  userName: string;
+  setUserName: (name: string) => void;
   dayPlans: DayPlan[];
   userStats: UserStats;
   fypMilestones: FYPMilestone[];
@@ -21,6 +23,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentDay, setCurrentDay] = useState<number>(1);
+  const [userName, setUserName] = useState<string>('Aswin Sai');
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(SEEDED_90_DAYS);
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
@@ -99,6 +102,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentDay,
         setCurrentDay,
+        userName,
+        setUserName,
         dayPlans,
         userStats,
         fypMilestones,
