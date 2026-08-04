@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../context/AppContext';
@@ -41,13 +42,18 @@ export default function ProfileScreen() {
     { key: 'fyp', label: 'Final-Year Project', color: '#EC4899' },
   ];
 
-  // GitHub contribution graph data (last 28 days breakdown)
-  const past28Days = Array.from({ length: 28 }, (_, i) => {
+  // Interactive Monthly Calendar View (31-day layout with day-of-week headers)
+  const monthDays = Array.from({ length: 31 }, (_, i) => {
     const dayNum = i + 1;
     const plan = dayPlans.find((p) => p.dayNumber === dayNum);
+    const totalInDay = plan ? plan.tasks.length : 0;
     const completedInDay = plan ? plan.tasks.filter((t) => t.isCompleted).length : 0;
-    return { dayNum, count: completedInDay };
+    const isCompletedDay = completedInDay >= 2;
+    return { dayNum, totalInDay, completedInDay, isCompletedDay };
   });
+
+  const weekHeaderLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<any>(null);
 
   const handleMorningToggle = (val: boolean) => {
     setMorningReminder(val);
@@ -141,30 +147,52 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* GitHub Style Contribution Graph Card */}
+        {/* Interactive Calendar View Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>28-Day Streak Contribution Grid</Text>
-          <Text style={styles.cardSub}>Daily task completion heatmap</Text>
+          <Text style={styles.cardTitle}>Placement Progress Calendar</Text>
+          <Text style={styles.cardSub}>Tap any day to view completion breakdown</Text>
 
-          <View style={styles.githubGrid}>
-            {past28Days.map((item) => {
-              const intensity = item.count === 0 ? 0 : item.count <= 2 ? 1 : item.count <= 4 ? 2 : 3;
-              const bgColors = ['#E5E7EB', '#86EFAC', '#22C55E', '#15803D'];
+          {/* Weekday Labels Header */}
+          <View style={styles.calendarHeaderRow}>
+            {weekHeaderLabels.map((dayLabel) => (
+              <Text key={dayLabel} style={styles.calendarHeaderCell}>
+                {dayLabel}
+              </Text>
+            ))}
+          </View>
+
+          {/* Calendar Grid */}
+          <View style={styles.calendarGrid}>
+            {monthDays.map((item) => {
+              const bgColors = ['#F3F4F6', '#DCFCE7', '#22C55E', '#15803D'];
+              const intensity = item.completedInDay === 0 ? 0 : item.completedInDay === 1 ? 1 : item.completedInDay === 2 ? 2 : 3;
               return (
-                <View key={item.dayNum} style={styles.githubGridItem}>
-                  <View style={[styles.githubSquare, { backgroundColor: bgColors[intensity] }]} />
-                  <Text style={styles.githubDayLabel}>D{item.dayNum}</Text>
-                </View>
+                <TouchableOpacity
+                  key={item.dayNum}
+                  style={[styles.calendarDayCell, { backgroundColor: bgColors[intensity] }]}
+                  onPress={() => setSelectedCalendarDay(item)}
+                >
+                  <Text
+                    style={[
+                      styles.calendarDayNum,
+                      item.completedInDay >= 2 && { color: '#FFFFFF', fontWeight: '800' },
+                    ]}
+                  >
+                    {item.dayNum}
+                  </Text>
+                  {item.completedInDay >= 2 && <Text style={styles.checkDot}>✓</Text>}
+                </TouchableOpacity>
               );
             })}
           </View>
+
           <View style={styles.legendRow}>
-            <Text style={styles.legendText}>Less</Text>
-            <View style={[styles.legendSquare, { backgroundColor: '#E5E7EB' }]} />
-            <View style={[styles.legendSquare, { backgroundColor: '#86EFAC' }]} />
+            <Text style={styles.legendText}>0 tasks</Text>
+            <View style={[styles.legendSquare, { backgroundColor: '#F3F4F6' }]} />
+            <View style={[styles.legendSquare, { backgroundColor: '#DCFCE7' }]} />
             <View style={[styles.legendSquare, { backgroundColor: '#22C55E' }]} />
             <View style={[styles.legendSquare, { backgroundColor: '#15803D' }]} />
-            <Text style={styles.legendText}>More</Text>
+            <Text style={styles.legendText}>Completed (2+ tasks)</Text>
           </View>
         </View>
 
@@ -238,6 +266,30 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Calendar Day Detail Modal */}
+      <Modal visible={!!selectedCalendarDay} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Day {selectedCalendarDay?.dayNum} Placement Breakdown</Text>
+            <Text style={styles.modalSub}>
+              {selectedCalendarDay?.completedInDay >= 2
+                ? '🔥 Day Streak Completed!'
+                : `${selectedCalendarDay?.completedInDay || 0} of ${selectedCalendarDay?.totalInDay || 4} tasks completed`}
+            </Text>
+
+            <View style={styles.modalBadgeRow}>
+              <Text style={[styles.modalStatusBadge, selectedCalendarDay?.isCompletedDay ? styles.badgeSuccess : styles.badgePending]}>
+                {selectedCalendarDay?.isCompletedDay ? 'Streak Earned ✓' : 'Incomplete'}
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setSelectedCalendarDay(null)}>
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -353,26 +405,43 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 16,
   },
-  githubGrid: {
+  calendarHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  calendarHeaderCell: {
+    width: '13%',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+  calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  githubGridItem: {
+  calendarDayCell: {
+    width: '13%',
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
   },
-  githubSquare: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-  },
-  githubDayLabel: {
-    fontSize: 9,
+  calendarDayNum: {
+    fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: '#374151',
+  },
+  checkDot: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '800',
+    marginTop: -2,
   },
   legendRow: {
     flexDirection: 'row',
@@ -389,7 +458,62 @@ const styles = StyleSheet.create({
   legendSquare: {
     width: 12,
     height: 12,
-    borderRadius: 3,
+    borderRadius: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#12131A',
+  },
+  modalSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  modalBadgeRow: {
+    marginVertical: 6,
+  },
+  modalStatusBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  badgeSuccess: {
+    backgroundColor: '#DCFCE7',
+    color: '#15803D',
+  },
+  badgePending: {
+    backgroundColor: '#F3F4F6',
+    color: '#6B7280',
+  },
+  modalCloseBtn: {
+    backgroundColor: '#12131A',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginTop: 6,
+  },
+  modalCloseText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
   trackBreakdownList: {
     gap: 14,
