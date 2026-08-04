@@ -1,7 +1,9 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Home, ClipboardList, Calendar, User } from 'lucide-react-native';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text, StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function TabLayout() {
   return (
@@ -12,13 +14,13 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 76 : 68,
-          paddingHorizontal: 6,
+          height: Platform.OS === 'ios' ? 74 : 66,
+          paddingHorizontal: 8,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 24 : 16,
-          left: 12,
-          right: 12,
-          borderRadius: 40,
+          bottom: Platform.OS === 'ios' ? 22 : 14,
+          left: 14,
+          right: 14,
+          borderRadius: 38,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.1,
@@ -26,6 +28,7 @@ export default function TabLayout() {
           elevation: 10,
           flexDirection: 'row',
           alignItems: 'center',
+          justifyContent: 'space-between',
         },
       }}
     >
@@ -34,9 +37,9 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabWrapper, focused && styles.activePill]}>
-              <Home size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
+            <View style={[styles.tabItem, focused && styles.activePill]}>
+              <Home size={17} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]}>
                 Home
               </Text>
             </View>
@@ -48,9 +51,9 @@ export default function TabLayout() {
         options={{
           title: 'Projects',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabWrapper, focused && styles.activePill]}>
-              <ClipboardList size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
+            <View style={[styles.tabItem, focused && styles.activePill]}>
+              <ClipboardList size={17} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]}>
                 Projects
               </Text>
             </View>
@@ -62,9 +65,9 @@ export default function TabLayout() {
         options={{
           title: 'Calendar',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabWrapper, focused && styles.activePill]}>
-              <Calendar size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
+            <View style={[styles.tabItem, focused && styles.activePill]}>
+              <Calendar size={17} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]}>
                 Calendar
               </Text>
             </View>
@@ -76,9 +79,9 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabWrapper, focused && styles.activePill]}>
-              <User size={18} color={focused ? '#FFFFFF' : '#12131A'} />
-              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]} numberOfLines={1}>
+            <View style={[styles.tabItem, focused && styles.activePill]}>
+              <User size={17} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Text style={[styles.label, focused ? styles.activeText : styles.inactiveText]}>
                 Profile
               </Text>
             </View>
@@ -96,20 +99,20 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabWrapper: {
-    width: '100%',
-    height: 52,
+  tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: width < 380 ? 8 : 12,
+    paddingVertical: 7,
     borderRadius: 26,
-    paddingHorizontal: 2,
+    minWidth: width < 380 ? 64 : 72,
   },
   activePill: {
     backgroundColor: '#12131A',
     borderRadius: 26,
   },
   label: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     marginTop: 2,
     textAlign: 'center',
