@@ -16,8 +16,6 @@ export default function TabLayout() {
           borderTopWidth: 0,
           height: Platform.OS === 'ios' ? 78 : 70,
           paddingHorizontal: 8,
-          paddingTop: 6,
-          paddingBottom: 6,
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 22 : 14,
           left: 14,
@@ -104,14 +102,14 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: width < 380 ? 8 : 12,
-    paddingVertical: 7,
-    borderRadius: 26,
+    paddingHorizontal: width < 380 ? 10 : 14,
+    paddingVertical: 10,
+    borderRadius: 30,
     minWidth: width < 380 ? 64 : 72,
   },
   activePill: {
     backgroundColor: '#12131A',
-    borderRadius: 26,
+    borderRadius: 30,
   },
   label: {
     fontSize: 9.5,
