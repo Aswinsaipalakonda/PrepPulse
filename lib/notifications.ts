@@ -1,77 +1,82 @@
-import { OneSignal, LogLevel } from 'react-native-onesignal';
-import Platform from 'react-native';
+import Constants from 'expo-constants';
 
 const ONESIGNAL_APP_ID = '0d7d15da-d7a9-4b0e-aa5e-4d37fb2ed8be';
+const isExpoGo = Constants.appOwnership === 'expo';
 
 let isOneSignalInitialized = false;
 
+// Dynamically get OneSignal module on standalone builds only
+function getOneSignalModule(): any {
+  if (isExpoGo) return null;
+  try {
+    const { OneSignal } = require('react-native-onesignal');
+    return OneSignal;
+  } catch (e) {
+    return null;
+  }
+}
+
 export function initOneSignal() {
-  if (isOneSignalInitialized) return;
+  if (isOneSignalInitialized || isExpoGo) return;
+
+  const OneSignal = getOneSignalModule();
+  if (!OneSignal) return;
 
   try {
-    // Enable verbose logging for debugging during development
-    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-
-    // Initialize OneSignal with App ID
+    OneSignal.Debug?.setLogLevel?.(0);
     OneSignal.initialize(ONESIGNAL_APP_ID);
+    OneSignal.Notifications?.requestPermission?.(true);
 
-    // Request push notification permission
-    OneSignal.Notifications.requestPermission(true);
-
-    // Add click event listener
-    OneSignal.Notifications.addEventListener('click', (event: any) => {
+    OneSignal.Notifications?.addEventListener?.('click', (event: any) => {
       console.log('OneSignal Notification Clicked:', event);
     });
 
-    // Add foreground event listener
-    OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event: any) => {
+    OneSignal.Notifications?.addEventListener?.('foregroundWillDisplay', (event: any) => {
       console.log('OneSignal Notification Foreground Will Display:', event);
     });
 
     isOneSignalInitialized = true;
     console.log('OneSignal initialized successfully');
   } catch (error) {
-    console.log('OneSignal initialization skipped on web/unsupported runtime:', error);
+    console.log('OneSignal initialization skipped on Expo Go preview environment');
   }
 }
 
 export function setOneSignalUserTag(key: string, value: string) {
+  const OneSignal = getOneSignalModule();
+  if (!OneSignal) return;
   try {
-    OneSignal.User.addTag(key, value);
+    OneSignal.User?.addTag?.(key, value);
   } catch (e) {
-    // Ignore if not initialized
+    // Ignore
   }
 }
 
 export function setOneSignalUserExternalId(externalId: string) {
+  const OneSignal = getOneSignalModule();
+  if (!OneSignal) return;
   try {
-    OneSignal.login(externalId);
+    OneSignal.login?.(externalId);
   } catch (e) {
-    // Ignore if not initialized
+    // Ignore
   }
 }
 
 export async function requestNotificationPermissions(): Promise<boolean> {
+  const OneSignal = getOneSignalModule();
+  if (!OneSignal) return false;
   try {
-    return await OneSignal.Notifications.requestPermission(true);
+    return await OneSignal.Notifications?.requestPermission?.(true);
   } catch (e) {
     return false;
   }
 }
 
 export async function scheduleDailyReminders(morningEnabled: boolean, eveningEnabled: boolean) {
-  try {
-    setOneSignalUserTag('morning_reminders', morningEnabled ? 'true' : 'false');
-    setOneSignalUserTag('evening_reminders', eveningEnabled ? 'true' : 'false');
-  } catch (e) {
-    console.log('OneSignal tag update error:', e);
-  }
+  setOneSignalUserTag('morning_reminders', morningEnabled ? 'true' : 'false');
+  setOneSignalUserTag('evening_reminders', eveningEnabled ? 'true' : 'false');
 }
 
 export async function sendInstantTestNotification(title: string, body: string) {
-  try {
-    console.log(`Sending OneSignal Test Alert: [${title}] ${body}`);
-  } catch (e) {
-    console.log('Instant notification error:', e);
-  }
+  console.log(`OneSignal Test Alert: [${title}] ${body}`);
 }
