@@ -110,7 +110,7 @@ export default function SplashScreen() {
 
           {/* Radio Captain Swipe / Slide to Start Button */}
           <View style={styles.slideTrack}>
-            <Text style={styles.slideTrackText}>Slide to Accept Challenge & Start →</Text>
+            <Text style={styles.slideTrackText}>👉 Slide to Accept Challenge </Text>
 
             <Animated.View
               style={[

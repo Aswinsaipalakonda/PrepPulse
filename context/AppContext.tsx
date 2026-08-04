@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Task, DayPlan, FYPMilestone, UserStats } from '../types/planner';
 import { SEEDED_90_DAYS, INITIAL_FYP_MILESTONES, INITIAL_USER_STATS } from '../constants/curriculum';
+import { syncTaskCompletionToInsForge } from '../lib/insforge';
 import * as Haptics from 'expo-haptics';
 
 interface AppContextType {
@@ -55,6 +56,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const newTotalPoints = Math.max(0, prev.totalPoints + pointDiff);
         const newCompletedCount = Math.max(0, prev.completedTasksCount + countDiff);
         const newSolved = taskWasCompleted ? prev.solvedProblems + 1 : Math.max(0, prev.solvedProblems - 1);
+
+        // Sync with InsForge Backend
+        syncTaskCompletionToInsForge(taskId, taskWasCompleted, newTotalPoints);
 
         return {
           ...prev,
