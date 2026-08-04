@@ -8,6 +8,10 @@ import {
   FlatList,
   Dimensions,
   Animated,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../../context/AppContext';
@@ -16,7 +20,6 @@ import {
   Terminal,
   Calendar,
   Brain,
-  CheckCircle2,
   ArrowRight,
   User,
   Sparkles,
@@ -30,6 +33,7 @@ const ONBOARDING_SLIDES = [
     type: 'input',
     title: 'Welcome to PrepPulse!',
     subtitle: 'Enter your name to personalize your 90-day placement dashboard',
+    bg: require('../../assets/study-bg.png'),
     icon: User,
   },
   {
@@ -42,6 +46,7 @@ const ONBOARDING_SLIDES = [
     badge: 'DSA Track',
     badgeBg: '#FCE7F3',
     badgeColor: '#BE185D',
+    bg: require('../../assets/dsa-bg.png'),
     icon: Code2,
   },
   {
@@ -54,6 +59,7 @@ const ONBOARDING_SLIDES = [
     badge: 'Web Development',
     badgeBg: '#FEF3C7',
     badgeColor: '#B45309',
+    bg: require('../../assets/dev-bg.png'),
     icon: Terminal,
   },
   {
@@ -66,6 +72,7 @@ const ONBOARDING_SLIDES = [
     badge: 'Interview Prep',
     badgeBg: '#ECFDF5',
     badgeColor: '#047857',
+    bg: require('../../assets/interview-bg.png'),
     icon: Brain,
   },
   {
@@ -78,6 +85,7 @@ const ONBOARDING_SLIDES = [
     badge: '90-Day Plan',
     badgeBg: '#EFF6FF',
     badgeColor: '#1D4ED8',
+    bg: require('../../assets/study-bg.png'),
     icon: Calendar,
   },
 ];
@@ -103,55 +111,73 @@ export default function OnboardingScreen() {
     }
   };
 
-  const renderSlide = ({ item, index }: { item: (typeof ONBOARDING_SLIDES)[0]; index: number }) => {
+  const renderSlide = ({ item }: { item: (typeof ONBOARDING_SLIDES)[0] }) => {
     const IconComponent = item.icon;
 
-    if (item.type === 'input') {
-      return (
-        <View style={styles.slideContainer}>
-          <View style={styles.iconCircle}>
-            <IconComponent size={36} color="#EAB308" />
-          </View>
-          <Text style={styles.slideTitle}>{item.title}</Text>
-          <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-
-          <View style={styles.inputCard}>
-            <Text style={styles.inputLabel}>Your Name</Text>
-            <TextInput
-              style={styles.textInput}
-              value={nameInput}
-              onChangeText={setNameInput}
-              placeholder="e.g. Aswin Sai"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-        </View>
-      );
-    }
-
     return (
-      <View style={styles.slideContainer}>
-        <View style={[styles.badge, { backgroundColor: item.badgeBg }]}>
-          <Text style={[styles.badgeText, { color: item.badgeColor }]}>{item.badge}</Text>
-        </View>
+      <ImageBackground source={item.bg} style={styles.slideBgImage} resizeMode="cover">
+        <View style={styles.slideOverlay} />
 
-        <View style={styles.iconCircle}>
-          <IconComponent size={40} color="#EAB308" />
-        </View>
+        <View style={styles.slideContent}>
+          {item.type === 'input' ? (
+            <View style={styles.inputSlideContainer}>
+              {/* App Brand Logo Badge on Slide 1 */}
+              <View style={styles.brandLogoBadge}>
+                <Image
+                  source={require('../../assets/logo-without-bg.png')}
+                  style={styles.brandLogoImg}
+                />
+              </View>
 
-        <Text style={styles.slideTitle}>{item.title}</Text>
-        <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-        <Text style={styles.slideDescription}>{item.description}</Text>
-      </View>
+              <Text style={styles.slideTitle}>{item.title}</Text>
+              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+
+              <View style={styles.inputCard}>
+                <Text style={styles.inputLabel}>Your Name</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={nameInput}
+                  onChangeText={setNameInput}
+                  placeholder="e.g. Aswin Sai"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.highlightSlideContainer}>
+              {item.badge && (
+                <View style={[styles.badge, { backgroundColor: item.badgeBg }]}>
+                  <Text style={[styles.badgeText, { color: item.badgeColor }]}>{item.badge}</Text>
+                </View>
+              )}
+
+              <View style={styles.iconCircle}>
+                <IconComponent size={36} color="#EAB308" />
+              </View>
+
+              <Text style={styles.slideTitle}>{item.title}</Text>
+              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+              <Text style={styles.slideDescription}>{item.description}</Text>
+            </View>
+          )}
+        </View>
+      </ImageBackground>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Top Header */}
       <View style={styles.topHeader}>
         <View style={styles.brandRow}>
-          <Sparkles size={20} color="#EAB308" />
+          <Image
+            source={require('../../assets/logo-without-bg.png')}
+            style={styles.headerLogoImg}
+          />
           <Text style={styles.brandName}>PrepPulse</Text>
         </View>
         <Text style={styles.stepText}>
@@ -159,7 +185,7 @@ export default function OnboardingScreen() {
         </Text>
       </View>
 
-      {/* Smooth Horizontal Slide Carousel */}
+      {/* Smooth Horizontal Carousel with Image Backgrounds */}
       <FlatList
         ref={flatListRef}
         data={ONBOARDING_SLIDES}
@@ -177,16 +203,17 @@ export default function OnboardingScreen() {
         }}
       />
 
-      {/* Pagination Dots */}
-      <View style={styles.paginationRow}>
-        {ONBOARDING_SLIDES.map((_, idx) => {
-          const isSelected = currentIndex === idx;
-          return <View key={idx} style={[styles.dot, isSelected && styles.dotActive]} />;
-        })}
-      </View>
+      {/* Footer Navigation */}
+      <View style={styles.footerContainer}>
+        {/* Pagination Dots */}
+        <View style={styles.paginationRow}>
+          {ONBOARDING_SLIDES.map((_, idx) => {
+            const isSelected = currentIndex === idx;
+            return <View key={idx} style={[styles.dot, isSelected && styles.dotActive]} />;
+          })}
+        </View>
 
-      {/* Action Button */}
-      <View style={styles.bottomNav}>
+        {/* Action Button */}
         <TouchableOpacity activeOpacity={0.85} style={styles.nextBtn} onPress={handleNext}>
           <Text style={styles.nextBtnText}>
             {currentIndex === ONBOARDING_SLIDES.length - 1 ? 'Go to Home Dashboard' : 'Next'}
@@ -194,28 +221,35 @@ export default function OnboardingScreen() {
           <ArrowRight size={20} color="#12131A" />
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#12131A',
-    paddingTop: 54,
-    paddingBottom: 40,
+    backgroundColor: '#090A0F',
   },
   topHeader: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    marginBottom: 20,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  headerLogoImg: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
   brandName: {
     fontSize: 18,
@@ -225,19 +259,51 @@ const styles = StyleSheet.create({
   stepText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: '#D1D5DB',
   },
-  slideContainer: {
+  slideBgImage: {
     width: width,
-    paddingHorizontal: 32,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  slideOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9, 10, 15, 0.65)',
+  },
+  slideContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
+  inputSlideContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  brandLogoBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  brandLogoImg: {
+    width: 56,
+    height: 56,
+    resizeMode: 'contain',
+  },
+  highlightSlideContainer: {
+    alignItems: 'center',
+    marginTop: 40,
   },
   badge: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 14,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   badgeText: {
     fontSize: 12,
@@ -245,15 +311,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   iconCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   slideTitle: {
     fontSize: 28,
@@ -271,19 +337,18 @@ const styles = StyleSheet.create({
   },
   slideDescription: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#E5E7EB',
     textAlign: 'center',
     lineHeight: 22,
-    maxWidth: '90%',
   },
   inputCard: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(9, 10, 15, 0.85)',
     borderRadius: 20,
     padding: 20,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   inputLabel: {
     fontSize: 13,
@@ -292,33 +357,37 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 14,
     paddingHorizontal: 16,
     height: 52,
     color: '#FFFFFF',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 24,
+    right: 24,
+    alignItems: 'stretch',
   },
   paginationRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 28,
+    marginBottom: 16,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   dotActive: {
     width: 24,
     backgroundColor: '#EAB308',
-  },
-  bottomNav: {
-    paddingHorizontal: 24,
   },
   nextBtn: {
     height: 56,
