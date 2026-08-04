@@ -6,8 +6,6 @@ import { Bell, Shield, RotateCcw, LogOut, ChevronRight, User } from 'lucide-reac
 import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
-  const { user } = useUser();
-  const { signOut } = useAuth();
   const router = useRouter();
   const { resetProgram } = useAppStore();
 
@@ -19,8 +17,7 @@ export default function ProfileScreen() {
     Alert.alert('Program Reset', 'Your 90-day study plan has been reset to Day 1.');
   };
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleSignOut = () => {
     router.replace('/(auth)/sign-in');
   };
 
@@ -34,11 +31,11 @@ export default function ProfileScreen() {
       {/* User Card */}
       <View style={styles.userCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user?.firstName?.charAt(0) || 'U'}</Text>
+          <Text style={styles.avatarText}>O</Text>
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user?.fullName || 'Placement Aspirant'}</Text>
-          <Text style={styles.userEmail}>{user?.primaryEmailAddress?.emailAddress || 'user@example.com'}</Text>
+          <Text style={styles.userName}>Olivia Reed</Text>
+          <Text style={styles.userEmail}>olivia.placement@gmail.com</Text>
         </View>
       </View>
 

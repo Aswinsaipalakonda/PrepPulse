@@ -5,11 +5,8 @@ import { ProgressRing } from '../../components/ProgressRing';
 import { TaskCard } from '../../components/TaskCard';
 import { HeaderStats } from '../../components/HeaderStats';
 import { Bell, Plus, Calendar as CalendarIcon } from 'lucide-react-native';
-import { useUser } from '@clerk/clerk-expo';
-
 export default function TodayScreen() {
   const { dayPlans, currentDay, toggleTaskCompletion } = useAppStore();
-  const { user } = useUser();
   const [filter, setFilter] = useState<'all' | 'todo' | 'completed'>('all');
 
   const todayPlan = dayPlans.find((p) => p.dayNumber === currentDay) || dayPlans[0];
@@ -26,7 +23,7 @@ export default function TodayScreen() {
     return true;
   });
 
-  const userName = user?.firstName || 'Olivia';
+  const userName = 'Olivia';
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
