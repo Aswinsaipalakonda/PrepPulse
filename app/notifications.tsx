@@ -26,32 +26,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { currentDay, userStats, userName } = useAppStore();
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'n-1',
-      title: `☀️ Day ${currentDay} Placement Plan Ready!`,
-      body: `Good morning ${userName}! Your 90-day agenda for Day ${currentDay} is active. Master Java, DSA & PERN modules.`,
-      time: '08:00 AM Today',
-      type: 'reminder',
-      read: false,
-    },
-    {
-      id: 'n-2',
-      title: `🔥 ${userStats.currentStreak}-Day Streak Milestone!`,
-      body: `Awesome consistency! You have earned ${userStats.totalPoints} pts on your placement roadmap so far.`,
-      time: 'Yesterday',
-      type: 'streak',
-      read: true,
-    },
-    {
-      id: 'n-3',
-      title: '📁 FYP Architecture Finalized',
-      body: 'Your Campus Placement Portal capstone project architecture has been updated.',
-      time: '2 days ago',
-      type: 'milestone',
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -76,33 +51,45 @@ export default function NotificationsScreen() {
           <Text style={styles.unreadCount}>
             {notifications.filter((n) => !n.read).length} Unread Alerts
           </Text>
-          <TouchableOpacity style={styles.markReadBtn} onPress={markAllRead}>
-            <CheckCircle2 size={14} color="#EAB308" />
-            <Text style={styles.markReadText}>Mark All Read</Text>
-          </TouchableOpacity>
+          {notifications.length > 0 && (
+            <TouchableOpacity style={styles.markReadBtn} onPress={markAllRead}>
+              <CheckCircle2 size={14} color="#EAB308" />
+              <Text style={styles.markReadText}>Mark All Read</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Notifications Feed */}
         <ScrollView contentContainerStyle={styles.feed} showsVerticalScrollIndicator={false}>
-          {notifications.map((item) => (
-            <View key={item.id} style={[styles.notificationCard, !item.read && styles.unreadCard]}>
-              <View style={styles.iconCircle}>
-                {item.type === 'streak' ? (
-                  <Sparkles size={20} color="#F97316" />
-                ) : (
-                  <Bell size={20} color="#EAB308" />
-                )}
-              </View>
-
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardTime}>{item.time}</Text>
-                </View>
-                <Text style={styles.cardBody}>{item.body}</Text>
-              </View>
+          {notifications.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Bell size={40} color="#D1D5DB" />
+              <Text style={styles.emptyTitle}>No New Notifications</Text>
+              <Text style={styles.emptySub}>
+                Real-time OneSignal placement alerts & daily morning focus reminders will appear here.
+              </Text>
             </View>
-          ))}
+          ) : (
+            notifications.map((item) => (
+              <View key={item.id} style={[styles.notificationCard, !item.read && styles.unreadCard]}>
+                <View style={styles.iconCircle}>
+                  {item.type === 'streak' ? (
+                    <Sparkles size={20} color="#F97316" />
+                  ) : (
+                    <Bell size={20} color="#EAB308" />
+                  )}
+                </View>
+
+                <View style={styles.cardContent}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={styles.cardTime}>{item.time}</Text>
+                  </View>
+                  <Text style={styles.cardBody}>{item.body}</Text>
+                </View>
+              </View>
+            ))
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -217,6 +204,25 @@ const styles = StyleSheet.create({
   cardBody: {
     fontSize: 13,
     color: '#4B5563',
+    lineHeight: 18,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 10,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#12131A',
+    marginTop: 8,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    maxWidth: '80%',
     lineHeight: 18,
   },
 });
