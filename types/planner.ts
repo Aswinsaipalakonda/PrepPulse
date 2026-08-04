@@ -1,7 +1,7 @@
 export interface Task {
   id: string;
   dayNumber: number;
-  track: 'dsa' | 'dev' | 'aptitude' | 'interview' | 'fyp';
+  track: 'dsa' | 'dev' | 'aptitude' | 'interview' | 'fyp' | 'javafullstack' | 'pern' | 'revision' | string;
   title: string;
   conceptSummary: string;
   durationMinutes: number;
