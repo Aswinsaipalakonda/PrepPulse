@@ -8,7 +8,7 @@ import { initOneSignal } from '../lib/notifications';
 import { ClerkProvider } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_bW9kZXJuLXJlbmRlZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -32,12 +32,21 @@ export default function RootLayout() {
     initOneSignal();
   }, []);
 
+  if (publishableKey) {
+    return (
+      <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+        <AppProvider>
+          <StatusBar style="dark" />
+          <Slot />
+        </AppProvider>
+      </ClerkProvider>
+    );
+  }
+
   return (
-    <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
-      <AppProvider>
-        <StatusBar style="dark" />
-        <Slot />
-      </AppProvider>
-    </ClerkProvider>
+    <AppProvider>
+      <StatusBar style="dark" />
+      <Slot />
+    </AppProvider>
   );
 }
