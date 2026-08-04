@@ -15,18 +15,18 @@ export const insforge = createClient({
  */
 export async function syncTaskCompletionToInsForge(taskId: string, isCompleted: boolean, userPoints: number) {
   try {
-    // InsForge Database insert / update operation
-    await insforge.database.from('task_completions').insert([
-      {
-        task_id: taskId,
-        is_completed: isCompleted,
-        completed_at: new Date().toISOString(),
-        points_awarded: isCompleted ? 10 : 0,
-      },
-    ]);
+    if (insforge && insforge.database) {
+      await insforge.database.from('task_completions').insert([
+        {
+          task_id: taskId,
+          is_completed: isCompleted,
+          completed_at: new Date().toISOString(),
+          points_awarded: isCompleted ? 10 : 0,
+        },
+      ]);
+    }
   } catch (error) {
-    // Graceful offline fallback
-    console.log('InsForge sync handled offline/locally');
+    // Graceful offline fallback in mobile Expo Go environment
   }
 }
 
@@ -35,9 +35,11 @@ export async function syncTaskCompletionToInsForge(taskId: string, isCompleted: 
  */
 export async function fetchInsForgeCurriculum(): Promise<DayPlan[]> {
   try {
-    const { data, error } = await insforge.database.from('plan_days').select('*');
-    if (data && data.length > 0) {
-      return data as DayPlan[];
+    if (insforge && insforge.database) {
+      const { data, error } = await insforge.database.from('plan_days').select('*');
+      if (data && data.length > 0) {
+        return data as DayPlan[];
+      }
     }
   } catch (e) {
     // Fallback to seeded curriculum

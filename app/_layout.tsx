@@ -1,3 +1,5 @@
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
 import React from 'react';
 import { Slot } from 'expo-router';
 import { AppProvider } from '../context/AppContext';
