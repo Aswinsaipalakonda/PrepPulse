@@ -5,7 +5,7 @@ import { Slot } from 'expo-router';
 import { AppProvider } from '../context/AppContext';
 import { StatusBar } from 'expo-status-bar';
 import { initOneSignal } from '../lib/notifications';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_bW9kZXJuLXJlbmRlZXItNzQuY2xlcmsuYWNjb3VudHMuZGV2JA';
@@ -34,12 +34,10 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
-      <ClerkLoaded>
-        <AppProvider>
-          <StatusBar style="dark" />
-          <Slot />
-        </AppProvider>
-      </ClerkLoaded>
+      <AppProvider>
+        <StatusBar style="dark" />
+        <Slot />
+      </AppProvider>
     </ClerkProvider>
   );
 }
