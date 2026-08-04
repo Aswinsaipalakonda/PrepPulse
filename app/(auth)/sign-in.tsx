@@ -1,37 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useOAuth, useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Sparkles, ShieldCheck } from 'lucide-react-native';
-import * as WebBrowser from 'expo-web-browser';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
-  const { isSignedIn } = useAuth();
 
-  React.useEffect(() => {
-    if (isSignedIn) {
-      router.replace('/(onboarding)');
-    }
-  }, [isSignedIn]);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      const { createdSessionId, setActive } = await startOAuthFlow();
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        router.replace('/(onboarding)');
-      } else {
-        // Fallback for demo mode
-        router.replace('/(onboarding)');
-      }
-    } catch (err) {
-      // Allow seamless guest preview for testing
-      router.replace('/(onboarding)');
-    }
+  const handleGoogleSignIn = () => {
+    // Navigates directly to onboarding for smooth, instant previewing
+    router.replace('/(onboarding)');
   };
 
   return (
@@ -53,7 +30,7 @@ export default function SignInScreen() {
 
         <View style={styles.infoRow}>
           <ShieldCheck size={16} color="#6B7280" />
-          <Text style={styles.infoText}>Google OAuth Authentication via Clerk</Text>
+          <Text style={styles.infoText}>Google OAuth Authentication Enabled</Text>
         </View>
       </View>
     </View>
