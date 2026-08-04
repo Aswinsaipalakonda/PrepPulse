@@ -4,12 +4,11 @@
     "slug": "prep-pulse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "scheme": "preppulse",
     "userInterfaceStyle": "light",
     "plugins": [
-      "expo-router",
-      "expo-secure-store"
+      "expo-router"
     ],
     "ios": {
       "supportsTablet": true,
@@ -19,13 +18,11 @@
       "package": "com.preppulse.app",
       "adaptiveIcon": {
         "backgroundColor": "#12131A",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/logo-without-bg.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/logo-without-bg.png",
       "bundler": "metro"
     }
   }

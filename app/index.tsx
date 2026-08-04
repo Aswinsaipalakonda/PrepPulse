@@ -6,23 +6,19 @@ import { useAuth } from '@clerk/clerk-expo';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useAuth();
 
   const handleGetStarted = () => {
-    if (isSignedIn) {
-      router.replace('/(tabs)');
-    } else {
-      router.replace('/(auth)/sign-in');
-    }
+    router.replace('/(auth)/sign-in');
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <View style={styles.logoBadge}>
-            <Sparkles size={42} color="#FFFFFF" />
-          </View>
+          <Image
+            source={require('../assets/logo-without-bg.png')}
+            style={{ width: 100, height: 100, resizeMode: 'contain' }}
+          />
         </View>
 
         <Text style={styles.title}>PrepPulse</Text>
