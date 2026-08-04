@@ -21,7 +21,7 @@ import { sendInstantTestNotification } from '../../lib/notifications';
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { dayPlans, currentDay, userName, toggleTaskCompletion, isDayStarted, startDay, addNewCustomTask } = useAppStore();
+  const { dayPlans, currentDay, userName, toggleTaskCompletion, isDayStarted, startDay, toggleStartDay, addNewCustomTask } = useAppStore();
   const [filter, setFilter] = useState<'all' | 'todo' | 'completed'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
@@ -41,29 +41,28 @@ export default function TodayScreen() {
     return true;
   });
 
+  // Calculate time-based greeting dynamically
+  const currentHour = new Date().getHours();
+  const timeGreeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
+
   const handleStartDay = () => {
-    startDay();
-    sendInstantTestNotification(
-      `🚀 Day ${currentDay} Challenge Started!`,
-      `Let's conquer today's ${totalCount} placement modules, ${userName}!`
-    );
-    Alert.alert(
-      `Day ${currentDay} Started! 🚀`,
-      `Your 90-day placement timer for Day ${currentDay} is active. Complete your tasks to maintain your streak!`
-    );
+    if (!isDayStarted) {
+      startDay();
+      sendInstantTestNotification(
+        `🚀 Day ${currentDay} Challenge Started!`,
+        `Let's conquer today's ${totalCount} placement modules, ${userName}!`
+      );
+    } else {
+      toggleStartDay(); // Undo option
+    }
   };
 
   const handleNotificationPress = () => {
     router.push('/notifications');
   };
 
-  const handleCreateTask = () => {
-    if (taskTitle.trim()) {
-      addNewCustomTask(taskTitle.trim(), taskTrack);
-      setTaskTitle('');
-      setShowAddModal(false);
-      Alert.alert('Task Created 🎯', 'New task added to today\'s placement agenda!');
-    }
+  const handlePlusPress = () => {
+    router.push('/create-task');
   };
 
   return (
@@ -76,13 +75,13 @@ export default function TodayScreen() {
               <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
             </View>
             <View>
-              <Text style={styles.greetingTitle}>Good Morning</Text>
+              <Text style={styles.greetingTitle}>{timeGreeting}</Text>
               <Text style={styles.userName}>{userName} 👋</Text>
             </View>
           </View>
 
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconCircle} onPress={() => setShowAddModal(true)}>
+            <TouchableOpacity style={styles.iconCircle} onPress={handlePlusPress}>
               <Plus size={20} color="#12131A" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconCircle} onPress={handleNotificationPress}>
@@ -103,7 +102,7 @@ export default function TodayScreen() {
             </Text>
             <Text style={styles.startDaySub}>
               {isDayStarted
-                ? `${completedCount} of ${totalCount} modules finished`
+                ? `${completedCount} of ${totalCount} modules finished (Tap Active to Undo)`
                 : 'Click to start your daily timer & streak tracking'}
             </Text>
           </View>
@@ -114,10 +113,10 @@ export default function TodayScreen() {
               <Text style={styles.startBtnText}>Start Learning</Text>
             </TouchableOpacity>
           ) : (
-            <View style={styles.startedBadge}>
+            <TouchableOpacity style={styles.startedBadge} onPress={handleStartDay}>
               <CheckCircle2 size={16} color="#10B981" />
-              <Text style={styles.startedText}>Active</Text>
-            </View>
+              <Text style={styles.startedText}>Active (Undo)</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -213,46 +212,6 @@ export default function TodayScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* Add Custom Task Modal */}
-      <Modal visible={showAddModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Custom Task for Today</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <X size={20} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Task title..."
-              value={taskTitle}
-              onChangeText={setTaskTitle}
-            />
-
-            <Text style={styles.trackSelectLabel}>Select Track:</Text>
-            <View style={styles.trackSelectRow}>
-              {(['dsa', 'dev', 'aptitude', 'interview', 'fyp'] as const).map((tr) => (
-                <TouchableOpacity
-                  key={tr}
-                  style={[styles.trackChip, taskTrack === tr && styles.trackChipActive]}
-                  onPress={() => setTaskTrack(tr)}
-                >
-                  <Text style={[styles.trackChipText, taskTrack === tr && styles.trackChipTextActive]}>
-                    {tr.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity style={styles.modalSaveBtn} onPress={handleCreateTask}>
-              <Text style={styles.modalSaveBtnText}>Add Task</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

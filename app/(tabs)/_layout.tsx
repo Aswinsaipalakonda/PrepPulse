@@ -12,21 +12,21 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 76 : 68,
+          height: Platform.OS === 'ios' ? 70 : 64,
           paddingHorizontal: 8,
           position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 24 : 16,
+          bottom: Platform.OS === 'ios' ? 20 : 14,
           left: 16,
           right: 16,
-          borderRadius: 40,
+          borderRadius: 36,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.12,
-          shadowRadius: 20,
-          elevation: 12,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.1,
+          shadowRadius: 14,
+          elevation: 8,
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-around',
+          justifyContent: 'space-between',
         },
       }}
     >
@@ -36,7 +36,7 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.activeTabPill]}>
-              <Home size={19} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Home size={18} color={focused ? '#FFFFFF' : '#12131A'} />
               <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
                 Home
               </Text>
@@ -50,7 +50,7 @@ export default function TabLayout() {
           title: 'Projects',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.activeTabPill]}>
-              <ClipboardList size={19} color={focused ? '#FFFFFF' : '#12131A'} />
+              <ClipboardList size={18} color={focused ? '#FFFFFF' : '#12131A'} />
               <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
                 Projects
               </Text>
@@ -64,7 +64,7 @@ export default function TabLayout() {
           title: 'Calendar',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.activeTabPill]}>
-              <Calendar size={19} color={focused ? '#FFFFFF' : '#12131A'} />
+              <Calendar size={18} color={focused ? '#FFFFFF' : '#12131A'} />
               <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
                 Calendar
               </Text>
@@ -78,7 +78,7 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.activeTabPill]}>
-              <User size={19} color={focused ? '#FFFFFF' : '#12131A'} />
+              <User size={18} color={focused ? '#FFFFFF' : '#12131A'} />
               <Text style={[styles.tabLabel, focused ? styles.activeTabLabel : styles.inactiveTabLabel]}>
                 Profile
               </Text>
@@ -98,20 +98,18 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabItem: {
+    flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
     paddingVertical: 6,
-    borderRadius: 26,
-    minWidth: 62,
+    borderRadius: 28,
+    marginHorizontal: 2,
   },
   activeTabPill: {
     backgroundColor: '#12131A',
-    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 26,
-    flexDirection: 'column',
+    borderRadius: 28,
   },
   tabLabel: {
     fontSize: 10,

@@ -26,6 +26,11 @@ export default function SplashScreen() {
   const panX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (hasOnboarded) {
+      router.replace('/(tabs)');
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -38,7 +43,7 @@ export default function SplashScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [hasOnboarded]);
 
   const handleNext = () => {
     if (hasOnboarded) {

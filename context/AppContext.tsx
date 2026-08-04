@@ -16,6 +16,7 @@ interface AppContextType {
   setHasOnboarded: (val: boolean) => void;
   isDayStarted: boolean;
   startDay: () => void;
+  toggleStartDay: () => void;
   toggleTaskCompletion: (taskId: string) => void;
   updateTaskNotes: (taskId: string, notes: string) => void;
   addNewCustomTask: (title: string, track: 'dsa' | 'dev' | 'aptitude' | 'interview' | 'fyp') => void;
@@ -42,6 +43,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
       currentStreak: prev.currentStreak === 0 ? 1 : prev.currentStreak,
     }));
+  };
+
+  const toggleStartDay = () => {
+    setIsDayStarted((prev) => !prev);
   };
 
   const toggleTaskCompletion = (taskId: string) => {
@@ -174,6 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setHasOnboarded,
         isDayStarted,
         startDay,
+        toggleStartDay,
         toggleTaskCompletion,
         updateTaskNotes,
         addNewCustomTask,

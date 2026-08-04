@@ -5139,40 +5139,7 @@ export const SEEDED_90_DAYS: DayPlan[] = [
   }
 ];
 
-export const INITIAL_FYP_MILESTONES: FYPMilestone[] = [
-  {
-    id: 'fyp-1',
-    title: 'Requirement Analysis & System Architecture',
-    status: 'completed',
-    dueDate: 'Week 2',
-    tasksCount: 6,
-    completedTasksCount: 6,
-  },
-  {
-    id: 'fyp-2',
-    title: 'Database Schema & Core Backend APIs',
-    status: 'in_progress',
-    dueDate: 'Week 5',
-    tasksCount: 10,
-    completedTasksCount: 4,
-  },
-  {
-    id: 'fyp-3',
-    title: 'Frontend Dashboard & Integration',
-    status: 'planned',
-    dueDate: 'Week 9',
-    tasksCount: 12,
-    completedTasksCount: 0,
-  },
-  {
-    id: 'fyp-4',
-    title: 'Testing, Deployment & Documentation',
-    status: 'planned',
-    dueDate: 'Week 12',
-    tasksCount: 8,
-    completedTasksCount: 0,
-  },
-];
+export const INITIAL_FYP_MILESTONES: FYPMilestone[] = [];
 
 export const INITIAL_USER_STATS: UserStats = {
   currentStreak: 0,
