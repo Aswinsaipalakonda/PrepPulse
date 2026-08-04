@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import { useAppStore } from '../../context/AppContext';
 import { TaskCard } from '../../components/TaskCard';
-import { Calendar, ChevronRight, Sparkles } from 'lucide-react-native';
+import { Calendar } from 'lucide-react-native';
 
 export default function RoadmapScreen() {
   const { dayPlans, currentDay, setCurrentDay, toggleTaskCompletion } = useAppStore();
@@ -11,100 +19,109 @@ export default function RoadmapScreen() {
   const selectedPlan = dayPlans.find((p) => p.dayNumber === currentDay) || dayPlans[0];
 
   const filteredTasks = selectedPlan.tasks.filter(
-    (t) => selectedTrack === 'all' || t.track === selectedTrack
+    (t) => selectedTrack === 'all' || t.track === selectedTrack || (selectedTrack === 'dev' && (t.track === 'javafullstack' || t.track === 'pern'))
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>90-Day Placement Roadmap</Text>
-        <Text style={styles.headerSubtitle}>Structured curriculum from Day 1 to Day 90</Text>
-      </View>
-
-      {/* Days Horizontal Scrollbar */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.dayPickerContainer}
-      >
-        {dayPlans.slice(0, 30).map((plan) => {
-          const isActive = plan.dayNumber === currentDay;
-          return (
-            <TouchableOpacity
-              key={plan.dayNumber}
-              style={[styles.dayChip, isActive && styles.dayChipActive]}
-              onPress={() => setCurrentDay(plan.dayNumber)}
-            >
-              <Text style={[styles.dayChipText, isActive && styles.dayChipTextActive]}>
-                Day {plan.dayNumber}
-              </Text>
-              {plan.isSundayRest && <Text style={styles.restDot}>💤</Text>}
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Track Filters */}
-      <View style={styles.trackFilters}>
-        {[
-          { key: 'all', label: 'All' },
-          { key: 'dsa', label: 'DSA' },
-          { key: 'dev', label: 'Dev' },
-          { key: 'aptitude', label: 'Aptitude' },
-          { key: 'interview', label: 'Interview' },
-          { key: 'fyp', label: 'FYP' },
-        ].map((t) => (
-          <TouchableOpacity
-            key={t.key}
-            style={[styles.trackPill, selectedTrack === t.key && styles.trackPillActive]}
-            onPress={() => setSelectedTrack(t.key as any)}
-          >
-            <Text style={[styles.trackPillText, selectedTrack === t.key && styles.trackPillTextActive]}>
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Day Overview Banner */}
-      <View style={styles.dayBanner}>
-        <View style={styles.bannerRow}>
-          <Calendar size={18} color="#FFFFFF" />
-          <Text style={styles.dayBannerTitle}>{selectedPlan.title}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>90-Day Placement Roadmap</Text>
+          <Text style={styles.headerSubtitle}>Structured curriculum from Day 1 to Day 90</Text>
         </View>
-        <Text style={styles.dayBannerSub}>
-          {selectedPlan.tasks.length} Modules • {selectedPlan.isSundayRest ? 'Rest & Planning Day' : 'Standard 2-3 Hours'}
-        </Text>
-      </View>
 
-      {/* Tasks List */}
-      <ScrollView contentContainerStyle={styles.taskList} showsVerticalScrollIndicator={false}>
-        {filteredTasks.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No tasks match selected filter for Day {currentDay}</Text>
+        {/* Compact Horizontal Day Chips Picker */}
+        <View style={styles.pickerWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dayPickerContainer}
+          >
+            {dayPlans.map((plan) => {
+              const isActive = plan.dayNumber === currentDay;
+              return (
+                <TouchableOpacity
+                  key={plan.dayNumber}
+                  activeOpacity={0.8}
+                  style={[styles.dayChip, isActive && styles.dayChipActive]}
+                  onPress={() => setCurrentDay(plan.dayNumber)}
+                >
+                  <Text style={[styles.dayChipText, isActive && styles.dayChipTextActive]}>
+                    Day {plan.dayNumber}
+                  </Text>
+                  {plan.isSundayRest && <Text style={styles.restDot}>💤</Text>}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Track Filters */}
+        <View style={styles.trackFilters}>
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'dsa', label: 'DSA' },
+            { key: 'dev', label: 'Dev' },
+            { key: 'aptitude', label: 'Aptitude' },
+            { key: 'interview', label: 'Interview' },
+            { key: 'fyp', label: 'FYP' },
+          ].map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.trackPill, selectedTrack === t.key && styles.trackPillActive]}
+              onPress={() => setSelectedTrack(t.key as any)}
+            >
+              <Text style={[styles.trackPillText, selectedTrack === t.key && styles.trackPillTextActive]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Day Overview Banner */}
+        <View style={styles.dayBanner}>
+          <View style={styles.bannerRow}>
+            <Calendar size={16} color="#EAB308" />
+            <Text style={styles.dayBannerTitle}>{selectedPlan.title}</Text>
           </View>
-        ) : (
-          filteredTasks.map((task) => (
-            <TaskCard key={task.id} task={task} onToggleComplete={toggleTaskCompletion} />
-          ))
-        )}
-      </ScrollView>
-    </View>
+          <Text style={styles.dayBannerSub}>
+            {selectedPlan.tasks.length} Modules • {selectedPlan.isSundayRest ? 'Rest & Planning Day' : 'Standard 2-3 Hours'}
+          </Text>
+        </View>
+
+        {/* Tasks List */}
+        <ScrollView contentContainerStyle={styles.taskList} showsVerticalScrollIndicator={false}>
+          {filteredTasks.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No tasks match selected filter for Day {currentDay}</Text>
+            </View>
+          ) : (
+            filteredTasks.map((task) => (
+              <TaskCard key={task.id} task={task} onToggleComplete={toggleTaskCompletion} />
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: 54,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: 20,
-    marginBottom: 16,
+    marginTop: 10,
+    marginBottom: 12,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: '#12131A',
   },
@@ -113,22 +130,29 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  pickerWrapper: {
+    height: 48,
+    marginBottom: 12,
+  },
   dayPickerContainer: {
     paddingHorizontal: 20,
-    gap: 10,
-    marginBottom: 16,
+    gap: 8,
+    alignItems: 'center',
   },
   dayChip: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   dayChipActive: {
     backgroundColor: '#12131A',
+    borderColor: '#12131A',
   },
   dayChipText: {
     fontSize: 13,
@@ -136,7 +160,7 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   dayChipTextActive: {
-    color: '#FFFFFF',
+    color: '#EAB308',
   },
   restDot: {
     fontSize: 10,
@@ -145,41 +169,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     gap: 6,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   trackPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: '#FFFFFF',
   },
   trackPillActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#12131A',
   },
   trackPillText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#4B5563',
   },
   trackPillTextActive: {
-    color: '#FFFFFF',
+    color: '#EAB308',
   },
   dayBanner: {
     marginHorizontal: 20,
     backgroundColor: '#12131A',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
   },
   bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   dayBannerTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   dayBannerSub: {
@@ -188,7 +212,7 @@ const styles = StyleSheet.create({
   },
   taskList: {
     paddingHorizontal: 20,
-    paddingBottom: 110,
+    paddingBottom: 90,
   },
   emptyState: {
     backgroundColor: '#FFFFFF',

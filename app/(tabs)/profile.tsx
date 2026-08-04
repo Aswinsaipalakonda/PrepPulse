@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
-import { useUser, useAuth } from '@clerk/clerk-expo';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Switch,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import { useAppStore } from '../../context/AppContext';
-import { Bell, Shield, RotateCcw, LogOut, ChevronRight, User } from 'lucide-react-native';
+import { Bell, RotateCcw, LogOut, ChevronRight, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { scheduleDailyReminders, sendInstantTestNotification } from '../../lib/notifications';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -12,9 +22,38 @@ export default function ProfileScreen() {
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
 
+  const handleMorningToggle = (val: boolean) => {
+    setMorningReminder(val);
+    scheduleDailyReminders(val, eveningReminder);
+    if (val) {
+      sendInstantTestNotification('☀️ Morning Reminder Scheduled', 'Daily 08:00 AM placement focus reminder is active.');
+    }
+  };
+
+  const handleEveningToggle = (val: boolean) => {
+    setEveningReminder(val);
+    scheduleDailyReminders(morningReminder, val);
+    if (val) {
+      sendInstantTestNotification('🌆 Evening Reminder Scheduled', 'Daily 08:00 PM streak preservation reminder is active.');
+    }
+  };
+
   const handleReset = () => {
-    resetProgram();
-    Alert.alert('Program Reset', 'Your 90-day study plan has been reset to Day 1.');
+    Alert.alert(
+      'Reset 90-Day Curriculum',
+      'Are you sure you want to reset your placement progress back to Day 1?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            resetProgram();
+            Alert.alert('Program Reset', 'Your 90-day study plan has been reset to Day 1.');
+          },
+        },
+      ]
+    );
   };
 
   const handleSignOut = () => {
@@ -22,85 +61,92 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile & Preferences</Text>
-        <Text style={styles.headerSubtitle}>Manage notification times & program settings</Text>
-      </View>
-
-      {/* User Card */}
-      <View style={styles.userCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
-        </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{userName}</Text>
-          <Text style={styles.userEmail}>{userName.toLowerCase().replace(/\s+/g, '')}.placement@gmail.com</Text>
-        </View>
-      </View>
-
-      {/* Notifications Section */}
-      <View style={styles.card}>
-        <View style={styles.cardTitleRow}>
-          <Bell size={18} color="#8B5CF6" />
-          <Text style={styles.cardTitle}>Daily Push Notifications</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile & Preferences</Text>
+          <Text style={styles.headerSubtitle}>Manage notification times & program settings</Text>
         </View>
 
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Morning Plan Ready (08:00 AM)</Text>
-            <Text style={styles.settingSub}>Daily focus tasks notification</Text>
+        {/* User Card */}
+        <View style={styles.userCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
           </View>
-          <Switch
-            value={morningReminder}
-            onValueChange={setMorningReminder}
-            trackColor={{ false: '#D1D5DB', true: '#8B5CF6' }}
-          />
-        </View>
-
-        <View style={styles.settingRow}>
-          <View>
-            <Text style={styles.settingLabel}>Evening Focus Check (08:00 PM)</Text>
-            <Text style={styles.settingSub}>Streak preservation reminder</Text>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{userName}</Text>
+            <Text style={styles.userEmail}>{userName.toLowerCase().replace(/\s+/g, '')}.placement@gmail.com</Text>
           </View>
-          <Switch
-            value={eveningReminder}
-            onValueChange={setEveningReminder}
-            trackColor={{ false: '#D1D5DB', true: '#8B5CF6' }}
-          />
         </View>
-      </View>
 
-      {/* Actions Section */}
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.actionRow} onPress={handleReset}>
-          <RotateCcw size={18} color="#EF4444" />
-          <Text style={[styles.actionLabel, { color: '#EF4444' }]}>Reset 90-Day Curriculum</Text>
-          <ChevronRight size={18} color="#9CA3AF" />
-        </TouchableOpacity>
+        {/* Notifications Section */}
+        <View style={styles.card}>
+          <View style={styles.cardTitleRow}>
+            <Bell size={18} color="#EAB308" />
+            <Text style={styles.cardTitle}>Daily Push Notifications</Text>
+          </View>
 
-        <TouchableOpacity style={[styles.actionRow, { borderBottomWidth: 0 }]} onPress={handleSignOut}>
-          <LogOut size={18} color="#6B7280" />
-          <Text style={styles.actionLabel}>Sign Out</Text>
-          <ChevronRight size={18} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Morning Plan Ready (08:00 AM)</Text>
+              <Text style={styles.settingSub}>Daily focus tasks notification</Text>
+            </View>
+            <Switch
+              value={morningReminder}
+              onValueChange={handleMorningToggle}
+              trackColor={{ false: '#D1D5DB', true: '#EAB308' }}
+              thumbColor={morningReminder ? '#12131A' : '#F4F4F5'}
+            />
+          </View>
+
+          <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Evening Focus Check (08:00 PM)</Text>
+              <Text style={styles.settingSub}>Streak preservation reminder</Text>
+            </View>
+            <Switch
+              value={eveningReminder}
+              onValueChange={handleEveningToggle}
+              trackColor={{ false: '#D1D5DB', true: '#EAB308' }}
+              thumbColor={eveningReminder ? '#12131A' : '#F4F4F5'}
+            />
+          </View>
+        </View>
+
+        {/* Actions Section */}
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.actionRow} onPress={handleReset}>
+            <RotateCcw size={18} color="#EF4444" />
+            <Text style={[styles.actionLabel, { color: '#EF4444' }]}>Reset 90-Day Curriculum</Text>
+            <ChevronRight size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionRow, { borderBottomWidth: 0 }]} onPress={handleSignOut}>
+            <LogOut size={18} color="#6B7280" />
+            <Text style={styles.actionLabel}>Sign Out</Text>
+            <ChevronRight size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5EBF0',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
   container: {
     padding: 20,
-    paddingTop: 54,
-    paddingBottom: 110,
-    backgroundColor: '#F5EBF0',
+    paddingBottom: 90,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: '#12131A',
   },
@@ -127,7 +173,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: '#EAB308',
     fontSize: 22,
     fontWeight: '800',
   },
@@ -168,6 +214,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+  },
+  settingInfo: {
+    flex: 1,
+    paddingRight: 10,
   },
   settingLabel: {
     fontSize: 14,

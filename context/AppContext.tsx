@@ -14,9 +14,14 @@ interface AppContextType {
   fypMilestones: FYPMilestone[];
   hasOnboarded: boolean;
   setHasOnboarded: (val: boolean) => void;
+  isDayStarted: boolean;
+  startDay: () => void;
   toggleTaskCompletion: (taskId: string) => void;
   updateTaskNotes: (taskId: string, notes: string) => void;
+  addNewCustomTask: (title: string, track: 'dsa' | 'dev' | 'aptitude' | 'interview' | 'fyp') => void;
   addFYPMilestone: (title: string, dueDate: string) => void;
+  toggleFYPMilestoneStatus: (id: string) => void;
+  deleteFYPMilestone: (id: string) => void;
   resetProgram: () => void;
 }
 
@@ -29,6 +34,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
   const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
+  const [isDayStarted, setIsDayStarted] = useState<boolean>(false);
+
+  const startDay = () => {
+    setIsDayStarted(true);
+    setUserStats((prev) => ({
+      ...prev,
+      currentStreak: prev.currentStreak === 0 ? 1 : prev.currentStreak,
+    }));
+  };
 
   const toggleTaskCompletion = (taskId: string) => {
     try {
@@ -72,6 +86,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const addNewCustomTask = (title: string, track: 'dsa' | 'dev' | 'aptitude' | 'interview' | 'fyp') => {
+    const newTask: Task = {
+      id: `custom-${Date.now()}`,
+      dayNumber: currentDay,
+      track,
+      title,
+      conceptSummary: `Custom placement task created for Day ${currentDay}.`,
+      durationMinutes: 30,
+      learningResourceUrl: 'https://google.com',
+      practiceUrl: 'https://google.com',
+      difficulty: 'Medium',
+      isCompleted: false,
+    };
+
+    setDayPlans((prevPlans) =>
+      prevPlans.map((plan) =>
+        plan.dayNumber === currentDay
+          ? { ...plan, tasks: [...plan.tasks, newTask] }
+          : plan
+      )
+    );
+  };
+
   const updateTaskNotes = (taskId: string, notes: string) => {
     setDayPlans((prevPlans) =>
       prevPlans.map((plan) => ({
@@ -93,11 +130,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFypMilestones((prev) => [...prev, newMilestone]);
   };
 
+  const toggleFYPMilestoneStatus = (id: string) => {
+    setFypMilestones((prev) =>
+      prev.map((m) => {
+        if (m.id === id) {
+          const nextStatus =
+            m.status === 'planned' ? 'in_progress' : m.status === 'in_progress' ? 'completed' : 'planned';
+          return {
+            ...m,
+            status: nextStatus,
+            completedTasksCount: nextStatus === 'completed' ? m.tasksCount : 0,
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const deleteFYPMilestone = (id: string) => {
+    setFypMilestones((prev) => prev.filter((m) => m.id !== id));
+  };
+
   const resetProgram = () => {
     setDayPlans(SEEDED_90_DAYS);
     setFypMilestones(INITIAL_FYP_MILESTONES);
     setUserStats(INITIAL_USER_STATS);
     setHasOnboarded(false);
+    setIsDayStarted(false);
     setCurrentDay(1);
   };
 
@@ -113,9 +172,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fypMilestones,
         hasOnboarded,
         setHasOnboarded,
+        isDayStarted,
+        startDay,
         toggleTaskCompletion,
         updateTaskNotes,
+        addNewCustomTask,
         addFYPMilestone,
+        toggleFYPMilestoneStatus,
+        deleteFYPMilestone,
         resetProgram,
       }}
     >

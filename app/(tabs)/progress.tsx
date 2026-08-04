@@ -1,117 +1,149 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Platform } from 'react-native';
 import { useAppStore } from '../../context/AppContext';
 import { Flame, Award, BookOpen, Clock, CheckCircle2 } from 'lucide-react-native';
 
 export default function ProgressScreen() {
-  const { userStats } = useAppStore();
+  const { userStats, dayPlans } = useAppStore();
 
-  const mockWeeklyActivity = [
-    { day: 'Mon', count: 5, active: true },
-    { day: 'Tue', count: 4, active: true },
-    { day: 'Wed', count: 5, active: true },
-    { day: 'Thu', count: 0, active: false },
-    { day: 'Fri', count: 4, active: true },
-    { day: 'Sat', count: 4, active: true },
-    { day: 'Sun', count: 3, active: true },
+  // Calculate real track breakdown dynamically from completed tasks
+  const allTasks = dayPlans.flatMap((p) => p.tasks);
+  const totalTasksCount = allTasks.length;
+  const completedTasks = allTasks.filter((t) => t.isCompleted);
+
+  const getTrackStats = (trackKey: string) => {
+    const trackTotal = allTasks.filter((t) => t.track === trackKey || (trackKey === 'dev' && (t.track === 'javafullstack' || t.track === 'pern'))).length;
+    const trackDone = completedTasks.filter((t) => t.track === trackKey || (trackKey === 'dev' && (t.track === 'javafullstack' || t.track === 'pern'))).length;
+    const pct = trackTotal > 0 ? Math.round((trackDone / trackTotal) * 100) : 0;
+    return { trackTotal, trackDone, pct };
+  };
+
+  const tracks = [
+    { key: 'dsa', label: 'Striver A2Z Java DSA', color: '#8B5CF6' },
+    { key: 'dev', label: 'PERN & Spring Full-Stack', color: '#0284C7' },
+    { key: 'aptitude', label: 'IndiaBIX Aptitude', color: '#F59E0B' },
+    { key: 'interview', label: 'CS Notes & Technical HR', color: '#10B981' },
+    { key: 'fyp', label: 'Final-Year Project', color: '#EC4899' },
   ];
 
+  // GitHub contribution graph data (last 28 days breakdown)
+  const past28Days = Array.from({ length: 28 }, (_, i) => {
+    const dayNum = i + 1;
+    const plan = dayPlans.find((p) => p.dayNumber === dayNum);
+    const completedInDay = plan ? plan.tasks.filter((t) => t.isCompleted).length : 0;
+    return { dayNum, count: completedInDay };
+  });
+
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Study Analytics & Progress</Text>
-        <Text style={styles.headerSubtitle}>Comprehensive report of solved problems & streaks</Text>
-      </View>
-
-      {/* Grid Summary Cards */}
-      <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#FFEDD5' }]}>
-            <Flame size={20} color="#F97316" fill="#F97316" />
-          </View>
-          <Text style={styles.statValue}>{userStats.currentStreak} Days</Text>
-          <Text style={styles.statLabel}>Current Streak</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Study Analytics & Progress</Text>
+          <Text style={styles.headerSubtitle}>Comprehensive report of solved problems & streaks</Text>
         </View>
 
-        <View style={styles.statCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#F3E8FF' }]}>
-            <Award size={20} color="#8B5CF6" />
-          </View>
-          <Text style={styles.statValue}>{userStats.totalPoints}</Text>
-          <Text style={styles.statLabel}>Total Points</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#CCFBF1' }]}>
-            <BookOpen size={20} color="#0D9488" />
-          </View>
-          <Text style={styles.statValue}>{userStats.solvedProblems}</Text>
-          <Text style={styles.statLabel}>Problems Solved</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#E0F2FE' }]}>
-            <Clock size={20} color="#0284C7" />
-          </View>
-          <Text style={styles.statValue}>{Math.round(userStats.studyMinutes / 60)} hrs</Text>
-          <Text style={styles.statLabel}>Total Study Time</Text>
-        </View>
-      </View>
-
-      {/* Weekly Activity Grid */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>This Week's Activity Heatmap</Text>
-        <View style={styles.heatmapRow}>
-          {mockWeeklyActivity.map((item, idx) => (
-            <View key={idx} style={styles.heatmapCol}>
-              <View style={[styles.heatSquare, item.active ? styles.heatActive : styles.heatInactive]}>
-                {item.active && <CheckCircle2 size={16} color="#FFFFFF" />}
-              </View>
-              <Text style={styles.heatDayText}>{item.day}</Text>
+        {/* Grid Summary Cards */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <View style={[styles.iconCircle, { backgroundColor: '#FFEDD5' }]}>
+              <Flame size={20} color="#F97316" fill="#F97316" />
             </View>
-          ))}
-        </View>
-      </View>
+            <Text style={styles.statValue}>{userStats.currentStreak} Days</Text>
+            <Text style={styles.statLabel}>Current Streak</Text>
+          </View>
 
-      {/* Track Distribution */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Track Breakdown</Text>
-        <View style={styles.trackBreakdownList}>
-          {[
-            { label: 'Striver A2Z Java DSA', pct: '75%', color: '#8B5CF6' },
-            { label: 'PERN & Spring Full-Stack', pct: '60%', color: '#0284C7' },
-            { label: 'IndiaBIX Aptitude', pct: '85%', color: '#F59E0B' },
-            { label: 'CS Notes & Technical HR', pct: '70%', color: '#10B981' },
-            { label: 'Final-Year Project', pct: '50%', color: '#EC4899' },
-          ].map((item, idx) => (
-            <View key={idx} style={styles.trackItem}>
-              <View style={styles.trackItemHeader}>
-                <Text style={styles.trackItemLabel}>{item.label}</Text>
-                <Text style={styles.trackItemPct}>{item.pct}</Text>
-              </View>
-              <View style={styles.barBg}>
-                <View style={[styles.barFill, { width: item.pct as `${number}%`, backgroundColor: item.color }]} />
-              </View>
+          <View style={styles.statCard}>
+            <View style={[styles.iconCircle, { backgroundColor: '#F3E8FF' }]}>
+              <Award size={20} color="#8B5CF6" />
             </View>
-          ))}
+            <Text style={styles.statValue}>{userStats.totalPoints}</Text>
+            <Text style={styles.statLabel}>Total Points</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={[styles.iconCircle, { backgroundColor: '#CCFBF1' }]}>
+              <BookOpen size={20} color="#0D9488" />
+            </View>
+            <Text style={styles.statValue}>{userStats.solvedProblems}</Text>
+            <Text style={styles.statLabel}>Problems Solved</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={[styles.iconCircle, { backgroundColor: '#E0F2FE' }]}>
+              <Clock size={20} color="#0284C7" />
+            </View>
+            <Text style={styles.statValue}>{Math.round((userStats.completedTasksCount * 40) / 60)} hrs</Text>
+            <Text style={styles.statLabel}>Total Study Time</Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* GitHub Style Contribution Graph Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>28-Day Streak Contribution Grid</Text>
+          <Text style={styles.cardSub}>Daily task completion heatmap</Text>
+
+          <View style={styles.githubGrid}>
+            {past28Days.map((item) => {
+              const intensity = item.count === 0 ? 0 : item.count <= 2 ? 1 : item.count <= 4 ? 2 : 3;
+              const bgColors = ['#E5E7EB', '#86EFAC', '#22C55E', '#15803D'];
+              return (
+                <View key={item.dayNum} style={styles.githubGridItem}>
+                  <View style={[styles.githubSquare, { backgroundColor: bgColors[intensity] }]} />
+                  <Text style={styles.githubDayLabel}>D{item.dayNum}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <View style={styles.legendRow}>
+            <Text style={styles.legendText}>Less</Text>
+            <View style={[styles.legendSquare, { backgroundColor: '#E5E7EB' }]} />
+            <View style={[styles.legendSquare, { backgroundColor: '#86EFAC' }]} />
+            <View style={[styles.legendSquare, { backgroundColor: '#22C55E' }]} />
+            <View style={[styles.legendSquare, { backgroundColor: '#15803D' }]} />
+            <Text style={styles.legendText}>More</Text>
+          </View>
+        </View>
+
+        {/* Dynamic Track Distribution */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Real-Time Track Breakdown</Text>
+          <View style={styles.trackBreakdownList}>
+            {tracks.map((item) => {
+              const { pct, trackDone, trackTotal } = getTrackStats(item.key);
+              return (
+                <View key={item.key} style={styles.trackItem}>
+                  <View style={styles.trackItemHeader}>
+                    <Text style={styles.trackItemLabel}>{item.label}</Text>
+                    <Text style={styles.trackItemPct}>{pct}% ({trackDone}/{trackTotal})</Text>
+                  </View>
+                  <View style={styles.barBg}>
+                    <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: item.color }]} />
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5EBF0',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
   container: {
     padding: 20,
-    paddingTop: 54,
-    paddingBottom: 110,
-    backgroundColor: '#F5EBF0',
+    paddingBottom: 90,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: '#12131A',
   },
@@ -166,36 +198,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#12131A',
+    marginBottom: 2,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: '#6B7280',
     marginBottom: 16,
   },
-  heatmapRow: {
+  githubGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
-  heatmapCol: {
+  githubGridItem: {
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
-  heatSquare: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  githubSquare: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
   },
-  heatActive: {
-    backgroundColor: '#10B981',
-  },
-  heatInactive: {
-    backgroundColor: '#E5E7EB',
-  },
-  heatDayText: {
-    fontSize: 12,
-    fontWeight: '600',
+  githubDayLabel: {
+    fontSize: 9,
+    fontWeight: '700',
     color: '#6B7280',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginTop: 4,
+  },
+  legendText: {
+    fontSize: 10,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  legendSquare: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
   },
   trackBreakdownList: {
     gap: 14,
+    marginTop: 12,
   },
   trackItem: {
     gap: 6,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, Map, FolderGit2, BarChart2, User } from 'lucide-react-native';
-import { View, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -9,28 +9,28 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: '#FFFFFF',
+        tabBarActiveTintColor: '#EAB308',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
           backgroundColor: '#12131A',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 82 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 12,
-          paddingTop: 12,
+          height: Platform.OS === 'ios' ? 68 : 62,
+          paddingBottom: Platform.OS === 'ios' ? 12 : 8,
+          paddingTop: 8,
           position: 'absolute',
-          bottom: 20,
-          left: 20,
-          right: 20,
-          borderRadius: 32,
+          bottom: Platform.OS === 'ios' ? 12 : 8,
+          left: 16,
+          right: 16,
+          borderRadius: 24,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.2,
-          shadowRadius: 16,
-          elevation: 10,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.25,
+          shadowRadius: 12,
+          elevation: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
+          fontSize: 10,
+          fontWeight: '700',
           marginTop: 2,
         },
       }}

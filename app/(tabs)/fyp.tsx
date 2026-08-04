@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import { useAppStore } from '../../context/AppContext';
-import { FolderGit2, Plus, CheckCircle2, Clock, Circle } from 'lucide-react-native';
+import { FolderGit2, Plus, CheckCircle2, Clock, Circle, Trash2 } from 'lucide-react-native';
 
 export default function FYPScreen() {
-  const { fypMilestones, addFYPMilestone } = useAppStore();
+  const { fypMilestones, addFYPMilestone, toggleFYPMilestoneStatus, deleteFYPMilestone } = useAppStore();
   const [newTitle, setNewTitle] = useState('');
   const [showAdd, setShowAdd] = useState(false);
 
@@ -14,106 +23,134 @@ export default function FYPScreen() {
 
   const handleAddMilestone = () => {
     if (newTitle.trim()) {
-      addFYPMilestone(newTitle.trim(), 'Day 80');
+      addFYPMilestone(newTitle.trim(), 'Week 8');
       setNewTitle('');
       setShowAdd(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Final-Year Project Workspace</Text>
-        <Text style={styles.headerSubtitle}>Track capstone milestones & daily project focus</Text>
-      </View>
-
-      {/* FYP Progress Header */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <FolderGit2 size={24} color="#8B5CF6" />
-          <Text style={styles.cardTitle}>Campus Placement Portal</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Final-Year Project Workspace</Text>
+          <Text style={styles.headerSubtitle}>Manage & update your capstone deliverables</Text>
         </View>
 
-        <Text style={styles.projectDesc}>
-          Full-Stack PERN & Java microservices capstone project configured for your 90-day roadmap.
-        </Text>
+        {/* Project Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <FolderGit2 size={24} color="#EAB308" />
+            <Text style={styles.cardTitle}>Campus Placement Portal</Text>
+          </View>
 
-        <View style={styles.progressRow}>
-          <Text style={styles.progressLabel}>Overall Project Progress</Text>
-          <Text style={styles.progressVal}>{Math.round(progressPct)}%</Text>
+          <Text style={styles.projectDesc}>
+            Full-Stack PERN & Java microservices capstone project configured for your 90-day roadmap.
+          </Text>
+
+          <View style={styles.progressRow}>
+            <Text style={styles.progressLabel}>Overall Project Progress</Text>
+            <Text style={styles.progressVal}>{Math.round(progressPct)}%</Text>
+          </View>
+
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+          </View>
         </View>
 
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
-        </View>
-      </View>
-
-      {/* Milestone Board Header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Milestones & Deliverables</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowAdd(!showAdd)}>
-          <Plus size={16} color="#FFFFFF" />
-          <Text style={styles.addBtnText}>Add</Text>
-        </TouchableOpacity>
-      </View>
-
-      {showAdd && (
-        <View style={styles.addCard}>
-          <TextInput
-            style={styles.input}
-            placeholder="New Milestone Title..."
-            value={newTitle}
-            onChangeText={setNewTitle}
-          />
-          <TouchableOpacity style={styles.saveBtn} onPress={handleAddMilestone}>
-            <Text style={styles.saveBtnText}>Save Milestone</Text>
+        {/* Milestone Board Header */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Milestones & To-Do Items</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => setShowAdd(!showAdd)}>
+            <Plus size={16} color="#FFFFFF" />
+            <Text style={styles.addBtnText}>Add Deliverable</Text>
           </TouchableOpacity>
         </View>
-      )}
 
-      {/* Milestones List */}
-      <View style={styles.milestoneList}>
-        {fypMilestones.map((m) => (
-          <View key={m.id} style={styles.milestoneItem}>
-            <View style={styles.mIcon}>
-              {m.status === 'completed' ? (
-                <CheckCircle2 size={22} color="#10B981" />
-              ) : m.status === 'in_progress' ? (
-                <Clock size={22} color="#F59E0B" />
-              ) : (
-                <Circle size={22} color="#9CA3AF" />
-              )}
-            </View>
-
-            <View style={styles.mContent}>
-              <Text style={styles.mTitle}>{m.title}</Text>
-              <Text style={styles.mMeta}>
-                Due: {m.dueDate} • {m.completedTasksCount}/{m.tasksCount} Tasks Complete
-              </Text>
-            </View>
-
-            <View style={[styles.statusBadge, m.status === 'completed' && styles.statusCompleted]}>
-              <Text style={styles.statusText}>{m.status.replace('_', ' ')}</Text>
-            </View>
+        {showAdd && (
+          <View style={styles.addCard}>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Implement User Authentication & JWT"
+              value={newTitle}
+              onChangeText={setNewTitle}
+            />
+            <TouchableOpacity style={styles.saveBtn} onPress={handleAddMilestone}>
+              <Text style={styles.saveBtnText}>Save Deliverable</Text>
+            </TouchableOpacity>
           </View>
-        ))}
-      </View>
-    </ScrollView>
+        )}
+
+        {/* Dynamic Milestones List */}
+        <View style={styles.milestoneList}>
+          {fypMilestones.map((m) => (
+            <View key={m.id} style={styles.milestoneItem}>
+              <TouchableOpacity
+                style={styles.mIcon}
+                onPress={() => toggleFYPMilestoneStatus(m.id)}
+              >
+                {m.status === 'completed' ? (
+                  <CheckCircle2 size={24} color="#10B981" fill="#10B981" />
+                ) : m.status === 'in_progress' ? (
+                  <Clock size={24} color="#F59E0B" />
+                ) : (
+                  <Circle size={24} color="#9CA3AF" />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.mContent}
+                onPress={() => toggleFYPMilestoneStatus(m.id)}
+              >
+                <Text
+                  style={[
+                    styles.mTitle,
+                    m.status === 'completed' && styles.completedText,
+                  ]}
+                >
+                  {m.title}
+                </Text>
+                <Text style={styles.mMeta}>
+                  Due: {m.dueDate} • Tap to cycle status
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.statusBadge, m.status === 'completed' && styles.statusCompleted]}
+                onPress={() => toggleFYPMilestoneStatus(m.id)}
+              >
+                <Text style={styles.statusText}>{m.status.replace('_', ' ')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => deleteFYPMilestone(m.id)}
+              >
+                <Trash2 size={16} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5EBF0',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
   container: {
     padding: 20,
-    paddingTop: 54,
-    paddingBottom: 110,
-    backgroundColor: '#F5EBF0',
+    paddingBottom: 90,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: '#12131A',
   },
@@ -126,11 +163,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
-    shadowRadius: 12,
+    shadowRadius: 10,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -162,7 +199,7 @@ const styles = StyleSheet.create({
   progressVal: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#EAB308',
   },
   progressBarBg: {
     height: 10,
@@ -172,7 +209,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EAB308',
     borderRadius: 5,
   },
   sectionHeader: {
@@ -217,14 +254,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   saveBtn: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#EAB308',
     paddingVertical: 10,
     borderRadius: 12,
     alignItems: 'center',
   },
   saveBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: '#12131A',
+    fontWeight: '800',
     fontSize: 13,
   },
   milestoneList: {
@@ -232,11 +269,11 @@ const styles = StyleSheet.create({
   },
   milestoneItem: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    padding: 14,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   mIcon: {},
   mContent: {
@@ -246,6 +283,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#1F2937',
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
+    color: '#9CA3AF',
   },
   mMeta: {
     fontSize: 11,
@@ -266,5 +307,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#374151',
     textTransform: 'capitalize',
+  },
+  deleteBtn: {
+    padding: 4,
   },
 });
