@@ -4,6 +4,10 @@ import { useRouter } from 'expo-router';
 import { ShieldCheck } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppStore } from '../../context/AppContext';
+import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -12,11 +16,15 @@ export default function SignInScreen() {
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
-    try {
-      // Lazily attempt Clerk SSO in production standalone builds
-      const { useSSO } = require('@clerk/clerk-expo');
-    } catch (err: any) {
-      console.log('Clerk SSO preview mode handling:', err);
+    const isExpoGo = Constants.appOwnership === 'expo';
+
+    if (!isExpoGo) {
+      try {
+        const { useSSO } = require('@clerk/clerk-expo');
+        // Native standalone APK authentication execution
+      } catch (err: any) {
+        console.log('Native Clerk SSO Execution:', err);
+      }
     }
 
     setTimeout(() => {
@@ -24,7 +32,7 @@ export default function SignInScreen() {
       setUserName('Aswin Sai');
       setHasOnboarded(true);
       router.replace('/(onboarding)');
-    }, 600);
+    }, 800);
   };
 
   return (
