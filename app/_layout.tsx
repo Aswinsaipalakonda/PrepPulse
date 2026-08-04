@@ -7,8 +7,10 @@ import { StatusBar } from 'expo-status-bar';
 import { initOneSignal } from '../lib/notifications';
 import { ClerkProvider } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
+const isExpoGo = Constants.appOwnership === 'expo';
 
 const tokenCache = {
   async getToken(key: string) {
@@ -32,7 +34,8 @@ export default function RootLayout() {
     initOneSignal();
   }, []);
 
-  if (publishableKey) {
+  // Use ClerkProvider in standalone native builds only to prevent Expo Go web asset fetch errors
+  if (publishableKey && !isExpoGo) {
     return (
       <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
         <AppProvider>
