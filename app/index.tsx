@@ -1,34 +1,40 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ImageBackground, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ImageBackground,
+  Animated,
+  Dimensions,
+  PanResponder,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../context/AppContext';
-import { Sparkles, ArrowRight } from 'lucide-react-native';
+import { ArrowRight, Sparkles } from 'lucide-react-native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const BUTTON_WIDTH = width - 56;
+const SWIPE_THRESHOLD = BUTTON_WIDTH - 64;
 
 export default function SplashScreen() {
   const router = useRouter();
   const { hasOnboarded } = useAppStore();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.92)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.94)).current;
+  const panX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 900,
         useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 1200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 900,
+        duration: 1000,
         useNativeDriver: true,
       }),
     ]).start();
@@ -42,6 +48,35 @@ export default function SplashScreen() {
     }
   };
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dx >= 0 && gestureState.dx <= SWIPE_THRESHOLD) {
+          panX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx >= SWIPE_THRESHOLD * 0.7) {
+          Animated.timing(panX, {
+            toValue: SWIPE_THRESHOLD,
+            duration: 150,
+            useNativeDriver: true,
+          }).start(() => {
+            handleNext();
+          });
+        } else {
+          Animated.spring(panX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 8,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -49,6 +84,7 @@ export default function SplashScreen() {
         style={styles.bgImage}
         resizeMode="cover"
       >
+        {/* Subtle, crystal-clear background overlay */}
         <View style={styles.overlay} />
 
         <Animated.View
@@ -56,16 +92,13 @@ export default function SplashScreen() {
             styles.contentContainer,
             {
               opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+              transform: [{ scale: scaleAnim }],
             },
           ]}
         >
-          {/* Logo */}
+          {/* Logo Badge */}
           <View style={styles.logoBadge}>
-            <Image
-              source={require('../assets/logo-without-bg.png')}
-              style={styles.logoImg}
-            />
+            <Image source={require('../assets/logo-without-bg.png')} style={styles.logoImg} />
           </View>
 
           <Text style={styles.appTitle}>PrepPulse</Text>
@@ -75,16 +108,22 @@ export default function SplashScreen() {
             Your 90-Day daily placement prep agenda covering Striver A2Z Java DSA, PERN/Spring Web Dev, Aptitude, CS Notes, and Final Year Project.
           </Text>
 
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.slideButton}
-            onPress={handleNext}
-          >
-            <View style={styles.slideIconCircle}>
+          {/* Radio Captain Swipe / Slide to Start Button */}
+          <View style={styles.slideTrack}>
+            <Text style={styles.slideTrackText}>Slide to Accept Raid & Start →</Text>
+
+            <Animated.View
+              style={[
+                styles.swipeThumb,
+                {
+                  transform: [{ translateX: panX }],
+                },
+              ]}
+              {...panResponder.panHandlers}
+            >
               <ArrowRight size={22} color="#12131A" />
-            </View>
-            <Text style={styles.slideText}>Tap to Start Plan</Text>
-          </TouchableOpacity>
+            </Animated.View>
+          </View>
         </Animated.View>
       </ImageBackground>
     </View>
@@ -103,7 +142,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 10, 15, 0.75)',
+    backgroundColor: 'rgba(9, 10, 15, 0.42)', // Reduced dark shadow for clear image visibility
   },
   contentContainer: {
     paddingHorizontal: 28,
@@ -111,10 +150,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBadge: {
-    width: 90,
-    height: 90,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -122,8 +161,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   logoImg: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     resizeMode: 'contain',
   },
   appTitle: {
@@ -136,45 +175,46 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#A78BFA',
+    color: '#EAB308', // Replaced purple with warm logo gold accent
     marginBottom: 16,
     textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: '#D1D5DB',
+    color: '#E5E7EB',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 36,
   },
-  slideButton: {
-    width: '100%',
+  slideTrack: {
+    width: BUTTON_WIDTH,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#7C3AED',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: '#12131A', // Dark charcoal matching logo badge
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
-  slideIconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+  slideTrackText: {
+    position: 'absolute',
+    width: '100%',
+    textAlign: 'center',
+    color: '#EAB308', // Warm logo gold text
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  swipeThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  slideText: {
-    flex: 1,
-    textAlign: 'center',
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginRight: 46,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
 });
