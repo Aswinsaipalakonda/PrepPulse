@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAppStore } from '../../context/AppContext';
 import { ProgressRing } from '../../components/ProgressRing';
 import { TaskCard } from '../../components/TaskCard';
@@ -19,6 +20,7 @@ import { Bell, Plus, Calendar as CalendarIcon, Play, CheckCircle2, X } from 'luc
 import { sendInstantTestNotification } from '../../lib/notifications';
 
 export default function TodayScreen() {
+  const router = useRouter();
   const { dayPlans, currentDay, userName, toggleTaskCompletion, isDayStarted, startDay, addNewCustomTask } = useAppStore();
   const [filter, setFilter] = useState<'all' | 'todo' | 'completed'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -52,14 +54,7 @@ export default function TodayScreen() {
   };
 
   const handleNotificationPress = () => {
-    sendInstantTestNotification(
-      '🔔 PrepPulse Focus Alert',
-      `You have ${pendingCount} pending tasks for Day ${currentDay}. Complete them to earn points!`
-    );
-    Alert.alert(
-      'Notification Test Sent 🔔',
-      `A push notification has been scheduled. (${pendingCount} pending tasks for today)`
-    );
+    router.push('/notifications');
   };
 
   const handleCreateTask = () => {

@@ -8,11 +8,25 @@
     "scheme": "preppulse",
     "userInterfaceStyle": "light",
     "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
+        }
+      ],
       "expo-router"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.preppulse.app"
+      "bundleIdentifier": "com.preppulse.app",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      },
+      "entitlements": {
+        "aps-environment": "development"
+      }
     },
     "android": {
       "package": "com.preppulse.app",
