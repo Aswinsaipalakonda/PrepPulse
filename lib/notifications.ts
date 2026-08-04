@@ -1,18 +1,30 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// Set notification handler behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+const isExpoGo = Constants.appOwnership === 'expo';
+
+// Only configure handlers on non-Expo-Go / production builds or safe runtimes
+if (!isExpoGo) {
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    // Ignore in unsupported environments
+  }
+}
 
 export async function requestNotificationPermissions(): Promise<boolean> {
+  if (isExpoGo) {
+    console.log('Skipping push notification permissions in Expo Go');
+    return false;
+  }
   try {
     const permissions: any = await Notifications.getPermissionsAsync();
     let isGranted = permissions?.status === 'granted' || permissions?.granted === true;
@@ -22,12 +34,15 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     }
     return isGranted;
   } catch (e) {
-    console.log('Notification permission request skipped on unsupported runtime');
     return false;
   }
 }
 
 export async function scheduleDailyReminders(morningEnabled: boolean, eveningEnabled: boolean) {
+  if (isExpoGo) {
+    console.log('Daily push notification scheduling active on standalone APK build');
+    return;
+  }
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -61,11 +76,14 @@ export async function scheduleDailyReminders(morningEnabled: boolean, eveningEna
       });
     }
   } catch (e) {
-    console.log('Notification scheduling skipped on unsupported environment');
+    console.log('Notification scheduling skipped');
   }
 }
 
 export async function sendInstantTestNotification(title: string, body: string) {
+  if (isExpoGo) {
+    return;
+  }
   try {
     const hasPerm = await requestNotificationPermissions();
     if (!hasPerm) return;
@@ -76,7 +94,7 @@ export async function sendInstantTestNotification(title: string, body: string) {
         body,
         sound: true,
       },
-      trigger: null, // instant
+      trigger: null,
     });
   } catch (e) {
     console.log('Instant notification error:', e);
