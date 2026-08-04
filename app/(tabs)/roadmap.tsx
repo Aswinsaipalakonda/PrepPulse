@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../context/AppContext';
 import { TaskCard } from '../../components/TaskCard';
 import { Calendar } from 'lucide-react-native';

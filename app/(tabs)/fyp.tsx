@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../../context/AppContext';
 import { FolderGit2, Plus, CheckCircle2, Clock, Circle, Trash2 } from 'lucide-react-native';
 

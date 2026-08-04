@@ -5175,11 +5175,11 @@ export const INITIAL_FYP_MILESTONES: FYPMilestone[] = [
 ];
 
 export const INITIAL_USER_STATS: UserStats = {
-  currentStreak: 4,
-  bestStreak: 12,
-  totalPoints: 340,
-  solvedProblems: 28,
-  studyMinutes: 1850,
+  currentStreak: 0,
+  bestStreak: 0,
+  totalPoints: 0,
+  solvedProblems: 0,
+  studyMinutes: 0,
   totalTasks: 360,
-  completedTasksCount: 34,
+  completedTasksCount: 0,
 };
