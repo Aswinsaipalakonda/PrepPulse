@@ -9,6 +9,8 @@ interface AppContextType {
   dayPlans: DayPlan[];
   userStats: UserStats;
   fypMilestones: FYPMilestone[];
+  hasOnboarded: boolean;
+  setHasOnboarded: (val: boolean) => void;
   toggleTaskCompletion: (taskId: string) => void;
   updateTaskNotes: (taskId: string, notes: string) => void;
   addFYPMilestone: (title: string, dueDate: string) => void;
@@ -22,6 +24,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(SEEDED_90_DAYS);
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
+  const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
 
   const toggleTaskCompletion = (taskId: string) => {
     try {
@@ -43,7 +46,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ...plan, tasks: updatedTasks };
       });
 
-      // Update points and stats
       setUserStats((prev) => {
         const pointDiff = taskWasCompleted ? 10 : -10;
         const countDiff = taskWasCompleted ? 1 : -1;
@@ -88,6 +90,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDayPlans(SEEDED_90_DAYS);
     setFypMilestones(INITIAL_FYP_MILESTONES);
     setUserStats(INITIAL_USER_STATS);
+    setHasOnboarded(false);
     setCurrentDay(1);
   };
 
@@ -99,6 +102,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dayPlans,
         userStats,
         fypMilestones,
+        hasOnboarded,
+        setHasOnboarded,
         toggleTaskCompletion,
         updateTaskNotes,
         addFYPMilestone,

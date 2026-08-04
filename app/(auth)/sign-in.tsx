@@ -1,38 +1,78 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ImageBackground, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Sparkles, ShieldCheck } from 'lucide-react-native';
+import { Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react-native';
 
 export default function SignInScreen() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleGoogleSignIn = () => {
-    // Navigates directly to onboarding for smooth, instant previewing
+  const handleContinue = () => {
     router.replace('/(onboarding)');
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.iconBadge}>
-          <Sparkles size={32} color="#12131A" />
-        </View>
+      <ImageBackground source={require('../../assets/study-bg.png')} style={styles.bgImage} resizeMode="cover">
+        <View style={styles.overlay} />
 
-        <Text style={styles.welcomeText}>Welcome to PrepPulse</Text>
-        <Text style={styles.subText}>
-          Sign in with your Google account to sync your 90-day placement study roadmap, streaks, and final-year project workspace.
-        </Text>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <Text style={styles.welcomeTitle}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to track your 90-day placement preparation</Text>
 
-        <TouchableOpacity activeOpacity={0.85} style={styles.googleButton} onPress={handleGoogleSignIn}>
-          <Text style={styles.googleIconText}>G</Text>
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
+          {/* Email input */}
+          <View style={styles.inputCard}>
+            <Mail size={20} color="#9CA3AF" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Your Email"
+              placeholderTextColor="#9CA3AF"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-        <View style={styles.infoRow}>
-          <ShieldCheck size={16} color="#6B7280" />
-          <Text style={styles.infoText}>Google OAuth Authentication Enabled</Text>
-        </View>
-      </View>
+          {/* Password input */}
+          <View style={styles.inputCard}>
+            <Lock size={20} color="#9CA3AF" />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Your Password"
+              placeholderTextColor="#9CA3AF"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <View style={styles.rememberRow}>
+            <Text style={styles.rememberText}>Remember me</Text>
+            <TouchableOpacity>
+              <Text style={styles.forgotText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Main Log In Button */}
+          <TouchableOpacity activeOpacity={0.85} style={styles.loginBtn} onPress={handleContinue}>
+            <Text style={styles.loginBtnText}>Log In</Text>
+          </TouchableOpacity>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Or Continue with</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Google Auth Button */}
+          <TouchableOpacity activeOpacity={0.85} style={styles.googleBtn} onPress={handleContinue}>
+            <Text style={styles.googleG}>G</Text>
+            <Text style={styles.googleText}>Google</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </ImageBackground>
     </View>
   );
 }
@@ -40,74 +80,116 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5EBF0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#090A0F',
   },
-  card: {
+  bgImage: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 28,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 6,
+    height: '100%',
   },
-  iconBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(9, 10, 15, 0.88)',
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 90,
+    paddingBottom: 40,
+    flexGrow: 1,
     justifyContent: 'center',
-    marginBottom: 20,
   },
-  welcomeText: {
-    fontSize: 24,
+  welcomeTitle: {
+    fontSize: 32,
     fontWeight: '800',
-    color: '#12131A',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
-  subText: {
+  subtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 28,
+    color: '#9CA3AF',
+    marginBottom: 32,
   },
-  googleButton: {
-    width: '100%',
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: '#12131A',
+  inputCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     gap: 12,
-    marginBottom: 20,
   },
-  googleIconText: {
-    color: '#4285F4',
-    fontSize: 22,
-    fontWeight: '900',
+  input: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 15,
   },
-  googleButtonText: {
+  rememberRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  rememberText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  forgotText: {
+    fontSize: 13,
+    color: '#A78BFA',
+    fontWeight: '600',
+  },
+  loginBtn: {
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+  },
+  loginBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
   },
-  infoRow: {
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    marginBottom: 24,
   },
-  infoText: {
-    fontSize: 12,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  dividerText: {
+    marginHorizontal: 12,
     color: '#6B7280',
+    fontSize: 12,
+  },
+  googleBtn: {
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  googleG: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#4285F4',
+  },
+  googleText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
