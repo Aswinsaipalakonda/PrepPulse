@@ -4,6 +4,8 @@ import { SEEDED_90_DAYS, INITIAL_FYP_MILESTONES, INITIAL_USER_STATS } from '../c
 import { syncTaskCompletionToInsForge } from '../lib/insforge';
 import * as Haptics from 'expo-haptics';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 interface AppContextType {
   currentDay: number;
   setCurrentDay: (day: number) => void;
@@ -24,18 +26,66 @@ interface AppContextType {
   toggleFYPMilestoneStatus: (id: string) => void;
   deleteFYPMilestone: (id: string) => void;
   resetProgram: () => void;
+  isLoaded: boolean;
 }
+
+const STORAGE_KEYS = {
+  HAS_ONBOARDED: 'preppulse_has_onboarded',
+  USER_NAME: 'preppulse_user_name',
+  USER_STATS: 'preppulse_user_stats',
+};
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentDay, setCurrentDay] = useState<number>(1);
-  const [userName, setUserName] = useState<string>('Aswin Sai');
+  const [userNameState, setUserNameState] = useState<string>('');
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(SEEDED_90_DAYS);
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
-  const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
+  const [hasOnboardedState, setHasOnboardedState] = useState<boolean>(false);
   const [isDayStarted, setIsDayStarted] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // Load persistent state on mount
+  React.useEffect(() => {
+    async function loadStorage() {
+      try {
+        const [savedOnboarded, savedName, savedStats] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.HAS_ONBOARDED),
+          AsyncStorage.getItem(STORAGE_KEYS.USER_NAME),
+          AsyncStorage.getItem(STORAGE_KEYS.USER_STATS),
+        ]);
+
+        if (savedOnboarded !== null) {
+          setHasOnboardedState(savedOnboarded === 'true');
+        }
+        if (savedName !== null && savedName.trim().length > 0) {
+          setUserNameState(savedName);
+        }
+        if (savedStats !== null) {
+          try {
+            setUserStats(JSON.parse(savedStats));
+          } catch (e) {}
+        }
+      } catch (err) {
+        console.error('Failed to load storage state:', err);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    loadStorage();
+  }, []);
+
+  const setHasOnboarded = (val: boolean) => {
+    setHasOnboardedState(val);
+    AsyncStorage.setItem(STORAGE_KEYS.HAS_ONBOARDED, String(val)).catch(() => {});
+  };
+
+  const setUserName = (name: string) => {
+    setUserNameState(name);
+    AsyncStorage.setItem(STORAGE_KEYS.USER_NAME, name).catch(() => {});
+  };
 
   const startDay = () => {
     setIsDayStarted(true);
@@ -183,12 +233,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         currentDay,
         setCurrentDay,
-        userName,
+        userName: userNameState,
         setUserName,
         dayPlans,
         userStats,
         fypMilestones,
-        hasOnboarded,
+        hasOnboarded: hasOnboardedState,
         setHasOnboarded,
         isDayStarted,
         startDay,
@@ -200,6 +250,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleFYPMilestoneStatus,
         deleteFYPMilestone,
         resetProgram,
+        isLoaded,
       }}
     >
       {children}

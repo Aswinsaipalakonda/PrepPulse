@@ -101,8 +101,8 @@ const ONBOARDING_SLIDES = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { setHasOnboarded, setUserName } = useAppStore();
-  const [nameInput, setNameInput] = useState('Aswin Sai');
+  const { setHasOnboarded, setUserName, userName } = useAppStore();
+  const [nameInput, setNameInput] = useState(userName || '');
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const flatListRef = useRef<FlatList>(null);
@@ -155,12 +155,12 @@ export default function OnboardingScreen() {
                 <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
 
                 <View style={styles.inputCard}>
-                  <Text style={styles.inputLabel}>Your Name</Text>
+                  <Text style={styles.inputLabel}>Your Full Name</Text>
                   <TextInput
                     style={styles.textInput}
                     value={nameInput}
                     onChangeText={setNameInput}
-                    placeholder="e.g. Aswin Sai"
+                    placeholder="Enter your name..."
                     placeholderTextColor="#9CA3AF"
                     autoCapitalize="words"
                     returnKeyType="done"

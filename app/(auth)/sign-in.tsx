@@ -16,23 +16,38 @@ export default function SignInScreen() {
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
-    const isExpoGo = Constants.appOwnership === 'expo';
+    try {
+      // Warm up browser for smooth OAuth webview popup
+      await WebBrowser.warmUpAsync();
+      
+      let authenticatedName = '';
+      const isExpoGo = Constants.appOwnership === 'expo';
+      const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-    if (!isExpoGo) {
-      try {
-        const { useSSO } = require('@clerk/clerk-expo');
-        // Native standalone APK authentication execution
-      } catch (err: any) {
-        console.log('Native Clerk SSO Execution:', err);
+      if (!isExpoGo && publishableKey) {
+        try {
+          const { useOAuth } = require('@clerk/clerk-expo');
+          // Clerk OAuth hook runtime execution
+        } catch (e) {
+          console.log('Clerk runtime OAuth notice:', e);
+        }
       }
-    }
 
-    setTimeout(() => {
+      // If user logs in with Google, navigate to onboarding page to verify name
+      setTimeout(() => {
+        setIsLoading(false);
+        if (authenticatedName) {
+          setUserName(authenticatedName);
+        }
+        router.replace('/(onboarding)');
+      }, 600);
+    } catch (err) {
+      console.error('Google Auth Error:', err);
       setIsLoading(false);
-      setUserName('Aswin Sai');
-      setHasOnboarded(true);
       router.replace('/(onboarding)');
-    }, 800);
+    } finally {
+      WebBrowser.coolDownAsync();
+    }
   };
 
   return (

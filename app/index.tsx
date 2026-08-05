@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,42 +8,83 @@ import {
   Animated,
   Dimensions,
   PanResponder,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '../context/AppContext';
-import { ArrowRight, Sparkles } from 'lucide-react-native';
+import { ArrowRight } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const BUTTON_WIDTH = width - 56;
 const SWIPE_THRESHOLD = BUTTON_WIDTH - 64;
 
-export default function SplashScreen() {
+export default function EntryScreen() {
   const router = useRouter();
-  const { hasOnboarded } = useAppStore();
+  const { hasOnboarded, isLoaded } = useAppStore();
+  const [showSplash, setShowSplash] = useState(true);
 
+  // Splash Screen Animations
+  const splashScale = useRef(new Animated.Value(0.5)).current;
+  const splashOpacity = useRef(new Animated.Value(0)).current;
+
+  // Onboarding Intro Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.94)).current;
   const panX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (hasOnboarded) {
-      router.replace('/(tabs)');
-      return;
-    }
-
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 900,
+    // Run 2-Second Logo Zoom & Fade Splash Animation
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(splashOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.quad),
+        }),
+        Animated.spring(splashScale, {
+          toValue: 1.15,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(splashScale, {
+        toValue: 1.0,
+        duration: 400,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.quad),
       }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 1000,
+      Animated.timing(splashOpacity, {
+        toValue: 0,
+        duration: 500,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [hasOnboarded]);
+
+    // After 2 seconds, evaluate session state and route
+    const timer = setTimeout(() => {
+      if (hasOnboarded) {
+        router.replace('/(tabs)');
+      } else {
+        setShowSplash(false);
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 900,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [hasOnboarded, isLoaded]);
 
   const handleNext = () => {
     if (hasOnboarded) {
@@ -82,6 +123,31 @@ export default function SplashScreen() {
     })
   ).current;
 
+  // 1. Render Animated 2-Second Logo Splash Screen
+  if (showSplash) {
+    return (
+      <View style={styles.splashContainer}>
+        <Animated.View
+          style={[
+            styles.splashLogoCard,
+            {
+              opacity: splashOpacity,
+              transform: [{ scale: splashScale }],
+            },
+          ]}
+        >
+          <Image
+            source={require('../assets/logo-without-bg.png')}
+            style={styles.splashLogoImg}
+          />
+          <Text style={styles.splashTitle}>PrepPulse</Text>
+          <Text style={styles.splashSubtitle}>90-Day Placement Ready</Text>
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // 2. Render Swipe Intro Screen for New Users
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -89,7 +155,6 @@ export default function SplashScreen() {
         style={styles.bgImage}
         resizeMode="cover"
       >
-        {/* Subtle, crystal-clear background overlay */}
         <View style={styles.overlay} />
 
         <Animated.View
@@ -101,7 +166,6 @@ export default function SplashScreen() {
             },
           ]}
         >
-          {/* Logo Badge */}
           <View style={styles.logoBadge}>
             <Image source={require('../assets/logo-without-bg.png')} style={styles.logoImg} />
           </View>
@@ -113,7 +177,6 @@ export default function SplashScreen() {
             Your 90-Day daily placement prep agenda covering Striver A2Z Java DSA, PERN/Spring Web Dev, Aptitude, CS Notes, and Final Year Project.
           </Text>
 
-          {/* Radio Captain Swipe / Slide to Start Button */}
           <View style={styles.slideTrack}>
             <Text style={styles.slideTrackText}>👉 Slide to Accept Challenge </Text>
 
@@ -136,6 +199,36 @@ export default function SplashScreen() {
 }
 
 const styles = StyleSheet.create({
+  splashContainer: {
+    flex: 1,
+    backgroundColor: '#090A0F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashLogoCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashLogoImg: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    marginBottom: 16,
+  },
+  splashTitle: {
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -1,
+    marginBottom: 6,
+  },
+  splashSubtitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#EAB308',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
   container: {
     flex: 1,
     backgroundColor: '#090A0F',
@@ -147,7 +240,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(9, 10, 15, 0.42)', // Reduced dark shadow for clear image visibility
+    backgroundColor: 'rgba(9, 10, 15, 0.42)',
   },
   contentContainer: {
     paddingHorizontal: 28,
@@ -180,7 +273,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#EAB308', // Replaced purple with warm logo gold accent
+    color: '#EAB308',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -195,7 +288,7 @@ const styles = StyleSheet.create({
     width: BUTTON_WIDTH,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#12131A', // Dark charcoal matching logo badge
+    backgroundColor: '#12131A',
     justifyContent: 'center',
     paddingHorizontal: 6,
     borderWidth: 1,
@@ -205,7 +298,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     textAlign: 'center',
-    color: '#EAB308', // Warm logo gold text
+    color: '#EAB308',
     fontSize: 15,
     fontWeight: '700',
   },
