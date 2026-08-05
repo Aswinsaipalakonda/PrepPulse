@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.git/
+.insforge/
+.claude/
+.vscode/
+screen.png
+90.json
+*.log
