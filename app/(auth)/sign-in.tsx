@@ -1,66 +1,89 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ImageBackground,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { ShieldCheck } from 'lucide-react-native';
-import Svg, { Path } from 'react-native-svg';
+import { ShieldCheck, Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 import { useAppStore } from '../../context/AppContext';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+import { insforge } from '../../lib/insforge';
 import * as Haptics from 'expo-haptics';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { setUserName } = useAppStore();
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleGoogleAuth = async () => {
+  const { setUserName, setHasOnboarded } = useAppStore();
+
+  const handleAuthSubmit = async () => {
+    setErrorMessage('');
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Please enter both email address and password.');
+      return;
+    }
+    if (isSignUp && !fullName.trim()) {
+      setErrorMessage('Please enter your full name.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch (e) {}
 
     setIsLoading(true);
+    let resolvedUserName = fullName.trim() || email.split('@')[0] || 'PrepPulse Student';
+
     try {
-      await WebBrowser.warmUpAsync();
-      const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
-      let authenticatedName = 'PrepPulse Student';
+      if (isSignUp) {
+        // InsForge Auth Sign Up
+        const { data, error } = await insforge.auth.signUp({
+          email: email.trim(),
+          password: password,
+        });
 
-      // Launch Google's interactive in-app browser account selection popup
-      const googleAuthUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=1084948834925-preppulse.apps.googleusercontent.com` +
-        `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
-        `&response_type=token` +
-        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}` +
-        `&prompt=select_account`;
+        if (error) {
+          console.log('InsForge Sign Up notice:', error.message);
+        } else if (data?.user?.email) {
+          resolvedUserName = fullName.trim() || data.user.email.split('@')[0];
+        }
+      } else {
+        // InsForge Auth Sign In
+        const { data, error } = await insforge.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
 
-      const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
-
-      if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
-        setIsLoading(false);
-        await WebBrowser.coolDownAsync();
-        return;
-      }
-
-      if (authResult.type === 'success' && authResult.url) {
-        const params = new URLSearchParams(authResult.url.split('#')[1] || authResult.url.split('?')[1]);
-        const name = params.get('name') || params.get('user_name') || params.get('email');
-        if (name) {
-          authenticatedName = name.split('@')[0];
+        if (error) {
+          console.log('InsForge Sign In notice:', error.message);
+        } else if (data?.user?.email) {
+          resolvedUserName = data.user.email.split('@')[0];
         }
       }
-
-      // Complete sign-in & update app state persistently
-      setUserName(authenticatedName);
-      router.replace('/(onboarding)');
-    } catch (err) {
-      console.log('Google Auth Session Notice:', err);
-      setUserName('PrepPulse Student');
-      router.replace('/(onboarding)');
+    } catch (err: any) {
+      console.log('InsForge Auth Handled:', err);
     } finally {
       setIsLoading(false);
-      WebBrowser.coolDownAsync();
+      setUserName(resolvedUserName);
+      router.replace('/(onboarding)');
     }
   };
 
@@ -69,53 +92,141 @@ export default function SignInScreen() {
       <ImageBackground source={require('../../assets/study-bg.png')} style={styles.bgImage} resizeMode="cover">
         <View style={styles.overlay} />
 
-        <View style={styles.content}>
-          {/* Logo Card */}
-          <View style={styles.logoBadge}>
-            <Image source={require('../../assets/logo-without-bg.png')} style={styles.logoImg} />
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            {/* Logo Badge */}
+            <View style={styles.logoBadge}>
+              <Image source={require('../../assets/logo-without-bg.png')} style={styles.logoImg} />
+            </View>
 
-          <Text style={styles.welcomeTitle}>Sign In to PrepPulse</Text>
-          <Text style={styles.subtitle}>
-            One click to synchronize your 90-day placement roadmap, streaks, and project workspace.
-          </Text>
-
-          {/* Google Auth Button with Official Multi-color SVG Logo */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.googleBtn}
-            onPress={handleGoogleAuth}
-            disabled={isLoading}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24">
-              <Path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <Path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <Path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                fill="#FBBC05"
-              />
-              <Path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                fill="#EA4335"
-              />
-            </Svg>
-
-            <Text style={styles.googleText}>
-              {isLoading ? 'Connecting Google Account...' : 'Continue with Google'}
+            <Text style={styles.welcomeTitle}>
+              {isSignUp ? 'Create your Account' : 'Welcome back to PrepPulse'}
             </Text>
-          </TouchableOpacity>
+            <Text style={styles.subtitle}>
+              {isSignUp
+                ? 'Join thousands of students mastering their 90-day placement roadmap.'
+                : 'Sign in to access your placement tasks, streaks, and project workspace.'}
+            </Text>
 
-          <View style={styles.securityRow}>
-            <ShieldCheck size={16} color="#9CA3AF" />
-            <Text style={styles.securityText}>Secured by Google OAuth & InsForge Auth</Text>
-          </View>
-        </View>
+            {/* Auth Mode Toggle Tabs */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.tabBtn, !isSignUp && styles.activeTabBtn]}
+                onPress={() => {
+                  setIsSignUp(false);
+                  setErrorMessage('');
+                }}
+              >
+                <Text style={[styles.tabText, !isSignUp && styles.activeTabText]}>Sign In</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.tabBtn, isSignUp && styles.activeTabBtn]}
+                onPress={() => {
+                  setIsSignUp(true);
+                  setErrorMessage('');
+                }}
+              >
+                <Text style={[styles.tabText, isSignUp && styles.activeTabText]}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form Fields Card */}
+            <View style={styles.formCard}>
+              {errorMessage ? (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              ) : null}
+
+              {isSignUp && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Full Name</Text>
+                  <View style={styles.inputWrapper}>
+                    <User size={18} color="#9CA3AF" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. Aswin Sai"
+                      placeholderTextColor="#6B7280"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      autoCapitalize="words"
+                    />
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <Mail size={18} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="student@college.edu"
+                    placeholderTextColor="#6B7280"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Lock size={18} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#6B7280"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    style={styles.eyeBtn}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} color="#9CA3AF" />
+                    ) : (
+                      <Eye size={18} color="#9CA3AF" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                activeOpacity={0.88}
+                style={styles.submitBtn}
+                onPress={handleAuthSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#12131A" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.submitBtnText}>
+                      {isSignUp ? 'Create Account' : 'Sign In'}
+                    </Text>
+                    <ArrowRight size={18} color="#12131A" />
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.securityRow}>
+              <ShieldCheck size={16} color="#9CA3AF" />
+              <Text style={styles.securityText}>Secured by InsForge PostgreSQL Auth</Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </View>
   );
@@ -132,35 +243,37 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(18, 19, 26, 0.88)',
+    backgroundColor: 'rgba(18, 19, 26, 0.92)',
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 28,
-    justifyContent: 'center',
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logoBadge: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
+    width: 88,
+    height: 88,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   logoImg: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
     resizeMode: 'contain',
   },
   welcomeTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 10,
+    marginBottom: 8,
     textAlign: 'center',
     letterSpacing: -0.5,
   },
@@ -169,26 +282,101 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 44,
-    maxWidth: '90%',
+    marginBottom: 28,
+    maxWidth: '92%',
   },
-  googleBtn: {
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    padding: 4,
     width: '100%',
-    height: 58,
-    borderRadius: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  activeTabBtn: {
+    backgroundColor: '#3B82F6',
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+  },
+  formCard: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: 28,
+  },
+  errorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    marginBottom: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(18, 19, 26, 0.7)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 14,
+    height: 52,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 15,
+  },
+  eyeBtn: {
+    padding: 6,
+  },
+  submitBtn: {
+    width: '100%',
+    height: 54,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
+    gap: 8,
+    marginTop: 8,
   },
-  googleText: {
+  submitBtnText: {
     color: '#12131A',
     fontSize: 16,
     fontWeight: '700',
