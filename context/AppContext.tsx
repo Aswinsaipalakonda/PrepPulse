@@ -49,13 +49,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Load persistent state on mount
   React.useEffect(() => {
+    let isMounted = true;
     async function loadStorage() {
       try {
-        const [savedOnboarded, savedName, savedStats] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.HAS_ONBOARDED),
-          AsyncStorage.getItem(STORAGE_KEYS.USER_NAME),
-          AsyncStorage.getItem(STORAGE_KEYS.USER_STATS),
-        ]);
+        const savedOnboarded = await AsyncStorage.getItem(STORAGE_KEYS.HAS_ONBOARDED).catch(() => null);
+        const savedName = await AsyncStorage.getItem(STORAGE_KEYS.USER_NAME).catch(() => null);
+        const savedStats = await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS).catch(() => null);
+
+        if (!isMounted) return;
 
         if (savedOnboarded !== null) {
           setHasOnboardedState(savedOnboarded === 'true');
@@ -69,12 +70,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           } catch (e) {}
         }
       } catch (err) {
-        console.error('Failed to load storage state:', err);
+        // Fallback gracefully without throwing
       } finally {
-        setIsLoaded(true);
+        if (isMounted) {
+          setIsLoaded(true);
+        }
       }
     }
     loadStorage();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const setHasOnboarded = (val: boolean) => {

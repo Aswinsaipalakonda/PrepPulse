@@ -53,14 +53,14 @@ export default function SignInScreen() {
         }
       }
 
-      // 2. Interactive Google Account Chooser & Auth Popup
+      // 2. Interactive Google Account Sign-In Popup
       if (!success) {
-        // Open Google's official Account Chooser modal in-app browser
-        const googleAuthUrl = `https://accounts.google.com/AccountChooser?service=lso&continue=${encodeURIComponent('https://accounts.google.com/')}`;
+        // Google's official Sign-In / Account Authentication flow
+        const googleAuthUrl = `https://accounts.google.com/signin/v2/identifier?service=lso&flowName=GlifWebSignIn&flowEntry=ServiceLogin`;
 
         const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
-        if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
+        if (authResult.type === 'cancel') {
           setIsLoading(false);
           await WebBrowser.coolDownAsync();
           return;
@@ -75,7 +75,7 @@ export default function SignInScreen() {
         }
       }
 
-      // Complete sign-in & update app state
+      // Complete sign-in & update app state persistently
       setUserName(authenticatedName);
       router.replace('/(onboarding)');
     } catch (err) {
