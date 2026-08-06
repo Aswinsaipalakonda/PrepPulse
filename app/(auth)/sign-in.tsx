@@ -54,14 +54,21 @@ export default function SignInScreen() {
 
     try {
       if (isSignUp) {
-        // InsForge Auth Sign Up
+        // InsForge Auth Sign Up with full name
         const { data, error } = await insforge.auth.signUp({
           email: email.trim(),
           password: password,
+          name: fullName.trim(),
         });
 
         if (error) {
           console.log('InsForge Sign Up notice:', error.message);
+          if (error.message) {
+            setErrorMessage(error.message);
+          }
+        }
+        if (data?.user?.profile?.name) {
+          resolvedUserName = data.user.profile.name;
         } else if (data?.user?.email) {
           resolvedUserName = fullName.trim() || data.user.email.split('@')[0];
         }
@@ -74,6 +81,12 @@ export default function SignInScreen() {
 
         if (error) {
           console.log('InsForge Sign In notice:', error.message);
+          if (error.message) {
+            setErrorMessage(error.message);
+          }
+        }
+        if (data?.user?.profile?.name) {
+          resolvedUserName = data.user.profile.name;
         } else if (data?.user?.email) {
           resolvedUserName = data.user.email.split('@')[0];
         }
