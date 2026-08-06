@@ -39,8 +39,8 @@ export default function RootLayout() {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
-  // Use ClerkProvider in standalone native builds only to prevent Expo Go web asset fetch errors
-  if (publishableKey && !isExpoGo) {
+  // Use ClerkProvider whenever publishableKey is present
+  if (publishableKey) {
     return (
       <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
         <AppProvider>

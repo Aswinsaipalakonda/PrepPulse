@@ -7,60 +7,64 @@ import { useAppStore } from '../../context/AppContext';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { useOAuth } from '@clerk/clerk-expo';
-
-import { insforge } from '../../lib/insforge';
-
-WebBrowser.maybeCompleteAuthSession();
+import { useSSO } from '@clerk/clerk-expo';
 
 export default function SignInScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { setUserName } = useAppStore();
 
-  let startOAuthFlow: ReturnType<typeof useOAuth>['startOAuthFlow'] | null = null;
+  let startSSOFlow: ReturnType<typeof useSSO>['startSSOFlow'] | null = null;
   try {
-    const oauth = useOAuth({ strategy: 'oauth_google' });
-    startOAuthFlow = oauth.startOAuthFlow;
+    const sso = useSSO();
+    startSSOFlow = sso.startSSOFlow;
   } catch (e) {
-    // ClerkProvider not mounted in current environment context
+    // Fallback if ClerkProvider is unmounted
   }
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
     try {
-      await WebBrowser.warmUpAsync();
-      const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
       let authenticatedName = 'PrepPulse User';
       let success = false;
 
-      // 1. Try Clerk OAuth Flow if available
-      if (startOAuthFlow) {
+      // 1. Official Clerk SSO Browser Google Auth
+      if (startSSOFlow) {
         try {
-          const { createdSessionId, setActive, signIn, signUp } = await startOAuthFlow({
-            redirectUrl,
+          const { createdSessionId, setActive, signUp } = await startSSOFlow({
+            strategy: 'oauth_google',
           });
 
           if (createdSessionId && setActive) {
             await setActive({ session: createdSessionId });
             success = true;
-            if (signUp?.firstName || signIn?.userData?.firstName) {
-              authenticatedName = `${signUp?.firstName || signIn?.userData?.firstName || ''} ${signUp?.lastName || signIn?.userData?.lastName || ''}`.trim() || 'PrepPulse User';
+            if (signUp?.firstName) {
+              authenticatedName = signUp.firstName;
             }
+          } else {
+            // User cancelled SSO prompt, stay on sign-in
+            setIsLoading(false);
+            return;
           }
         } catch (clerkErr) {
-          console.log('Clerk OAuth attempt:', clerkErr);
+          console.log('Clerk SSO Notice:', clerkErr);
         }
       }
 
-      // 2. Interactive Google Account Sign-In Popup
+      // 2. Direct Web Browser OAuth Fallback
       if (!success) {
-        // Google's official Sign-In / Account Authentication flow
-        const googleAuthUrl = `https://accounts.google.com/signin/v2/identifier?service=lso&flowName=GlifWebSignIn&flowEntry=ServiceLogin`;
+        await WebBrowser.warmUpAsync();
+        const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+          `client_id=1084948834925-preppulse.apps.googleusercontent.com` +
+          `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+          `&response_type=token` +
+          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}` +
+          `&prompt=select_account`;
 
         const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
-        if (authResult.type === 'cancel') {
+        if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
           setIsLoading(false);
           await WebBrowser.coolDownAsync();
           return;
@@ -75,12 +79,11 @@ export default function SignInScreen() {
         }
       }
 
-      // Complete sign-in & update app state persistently
+      // Complete sign-in & save user name to AppContext & AsyncStorage
       setUserName(authenticatedName);
       router.replace('/(onboarding)');
     } catch (err) {
       console.error('Google Auth Error:', err);
-      // Fallback navigation so user is never stuck
       setUserName('PrepPulse User');
       router.replace('/(onboarding)');
     } finally {
