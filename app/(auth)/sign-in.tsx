@@ -53,28 +53,18 @@ export default function SignInScreen() {
         }
       }
 
-      // 2. InsForge BaaS Google OAuth Authorization Endpoint
+      // 2. Interactive Google Account Chooser & Auth Popup
       if (!success) {
-        let authUrl = '';
-        try {
-          const res = await insforge.auth.signInWithOAuth('google', {
-            redirectTo: redirectUrl,
-            skipBrowserRedirect: true,
-            additionalParams: { prompt: 'select_account' },
-          });
-          if (res?.data?.url) {
-            authUrl = res.data.url;
-          }
-        } catch (e) {
-          console.log('InsForge OAuth URL fetch notice:', e);
-        }
+        // Open Google's official Account Chooser modal in-app browser
+        const googleAuthUrl = `https://accounts.google.com/AccountChooser?service=lso&continue=${encodeURIComponent('https://accounts.google.com/')}`;
 
-        // Fallback InsForge Google Auth OAuth URL if SDK skipBrowserRedirect didn't return URL
-        if (!authUrl) {
-          authUrl = `${process.env.EXPO_PUBLIC_INSFORGE_URL || 'https://94x5hqp9.ap-southeast.insforge.app'}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
-        }
+        const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
-        const authResult = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+        if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
+          setIsLoading(false);
+          await WebBrowser.coolDownAsync();
+          return;
+        }
 
         if (authResult.type === 'success' && authResult.url) {
           const params = new URLSearchParams(authResult.url.split('#')[1] || authResult.url.split('?')[1]);
@@ -82,14 +72,6 @@ export default function SignInScreen() {
           if (name) {
             authenticatedName = name.split('@')[0];
           }
-          success = true;
-        } else if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
-          setIsLoading(false);
-          await WebBrowser.coolDownAsync();
-          return;
-        } else {
-          // If browser opened and user completed or returned
-          success = true;
         }
       }
 
