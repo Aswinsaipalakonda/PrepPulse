@@ -18,9 +18,8 @@ import { useAppStore } from '../../context/AppContext';
 import { insforge } from '../../lib/insforge';
 import * as Haptics from 'expo-haptics';
 
-export default function SignInScreen() {
+export default function SignUpScreen() {
   const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,20 +27,20 @@ export default function SignInScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const { setUserName, setHasOnboarded } = useAppStore();
+  const { setUserName } = useAppStore();
 
-  const handleAuthSubmit = async () => {
+  const handleSignUpSubmit = async () => {
     setErrorMessage('');
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please enter both email address and password.');
-      return;
-    }
-    if (isSignUp && !fullName.trim()) {
+    if (!fullName.trim()) {
       setErrorMessage('Please enter your full name.');
       return;
     }
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
     if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+      setErrorMessage('Password must be at least 6 characters long.');
       return;
     }
 
@@ -50,49 +49,30 @@ export default function SignInScreen() {
     } catch (e) {}
 
     setIsLoading(true);
-    let resolvedUserName = fullName.trim() || email.split('@')[0] || 'PrepPulse Student';
+    let resolvedUserName = fullName.trim() || email.split('@')[0];
 
     try {
-      if (isSignUp) {
-        // InsForge Auth Sign Up with full name
-        const { data, error } = await insforge.auth.signUp({
-          email: email.trim(),
-          password: password,
-          name: fullName.trim(),
-        });
+      // InsForge Auth Register
+      const { data, error } = await insforge.auth.signUp({
+        email: email.trim(),
+        password: password,
+        name: fullName.trim(),
+      });
 
-        if (error) {
-          console.log('InsForge Sign Up notice:', error.message);
-          if (error.message) {
-            setErrorMessage(error.message);
-          }
-        }
-        if (data?.user?.profile?.name) {
-          resolvedUserName = data.user.profile.name;
-        } else if (data?.user?.email) {
-          resolvedUserName = fullName.trim() || data.user.email.split('@')[0];
-        }
-      } else {
-        // InsForge Auth Sign In
-        const { data, error } = await insforge.auth.signInWithPassword({
-          email: email.trim(),
-          password: password,
-        });
-
-        if (error) {
-          console.log('InsForge Sign In notice:', error.message);
-          if (error.message) {
-            setErrorMessage(error.message);
-          }
-        }
-        if (data?.user?.profile?.name) {
-          resolvedUserName = data.user.profile.name;
-        } else if (data?.user?.email) {
-          resolvedUserName = data.user.email.split('@')[0];
+      if (error) {
+        console.log('InsForge Sign Up notice:', error.message);
+        if (error.message) {
+          setErrorMessage(error.message);
         }
       }
+
+      if (data?.user?.profile?.name) {
+        resolvedUserName = data.user.profile.name;
+      } else if (data?.user?.email) {
+        resolvedUserName = fullName.trim() || data.user.email.split('@')[0];
+      }
     } catch (err: any) {
-      console.log('InsForge Auth Handled:', err);
+      console.log('InsForge Auth Sign Up Handled:', err);
     } finally {
       setIsLoading(false);
       setUserName(resolvedUserName);
@@ -115,36 +95,25 @@ export default function SignInScreen() {
               <Image source={require('../../assets/logo-without-bg.png')} style={styles.logoImg} />
             </View>
 
-            <Text style={styles.welcomeTitle}>
-              {isSignUp ? 'Create your Account' : 'Welcome back to PrepPulse'}
-            </Text>
+            <Text style={styles.welcomeTitle}>Create your Account</Text>
             <Text style={styles.subtitle}>
-              {isSignUp
-                ? 'Join thousands of students mastering their 90-day placement roadmap.'
-                : 'Sign in to access your placement tasks, streaks, and project workspace.'}
+              Join thousands of students mastering their 90-day placement roadmap.
             </Text>
 
-            {/* Auth Mode Toggle Tabs */}
+            {/* Auth Mode Toggle Link Bar */}
             <View style={styles.tabContainer}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.tabBtn, !isSignUp && styles.activeTabBtn]}
-                onPress={() => {
-                  setIsSignUp(false);
-                  setErrorMessage('');
-                }}
+                style={styles.tabBtn}
+                onPress={() => router.push('/(auth)/sign-in')}
               >
-                <Text style={[styles.tabText, !isSignUp && styles.activeTabText]}>Sign In</Text>
+                <Text style={styles.tabText}>Sign In</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.tabBtn, isSignUp && styles.activeTabBtn]}
-                onPress={() => {
-                  setIsSignUp(true);
-                  setErrorMessage('');
-                }}
+                style={[styles.tabBtn, styles.activeTabBtn]}
               >
-                <Text style={[styles.tabText, isSignUp && styles.activeTabText]}>Sign Up</Text>
+                <Text style={[styles.tabText, styles.activeTabText]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
 
@@ -156,22 +125,20 @@ export default function SignInScreen() {
                 </View>
               ) : null}
 
-              {isSignUp && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Full Name</Text>
-                  <View style={styles.inputWrapper}>
-                    <User size={18} color="#9CA3AF" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g. Aswin Sai"
-                      placeholderTextColor="#6B7280"
-                      value={fullName}
-                      onChangeText={setFullName}
-                      autoCapitalize="words"
-                    />
-                  </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Full Name</Text>
+                <View style={styles.inputWrapper}>
+                  <User size={18} color="#9CA3AF" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Aswin Sai"
+                    placeholderTextColor="#6B7280"
+                    value={fullName}
+                    onChangeText={setFullName}
+                    autoCapitalize="words"
+                  />
                 </View>
-              )}
+              </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email Address</Text>
@@ -218,16 +185,14 @@ export default function SignInScreen() {
               <TouchableOpacity
                 activeOpacity={0.88}
                 style={styles.submitBtn}
-                onPress={handleAuthSubmit}
+                onPress={handleSignUpSubmit}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#12131A" size="small" />
                 ) : (
                   <>
-                    <Text style={styles.submitBtnText}>
-                      {isSignUp ? 'Create Account' : 'Sign In'}
-                    </Text>
+                    <Text style={styles.submitBtnText}>Create Account</Text>
                     <ArrowRight size={18} color="#12131A" />
                   </>
                 )}
@@ -236,20 +201,11 @@ export default function SignInScreen() {
 
             {/* Footer Navigation Link */}
             <TouchableOpacity
-              onPress={() => {
-                if (isSignUp) {
-                  setIsSignUp(false);
-                } else {
-                  router.push('/(auth)/sign-up');
-                }
-              }}
+              onPress={() => router.push('/(auth)/sign-in')}
               style={styles.linkFooter}
             >
               <Text style={styles.linkText}>
-                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-                <Text style={styles.linkHighlight}>
-                  {isSignUp ? 'Sign In' : 'Sign Up'}
-                </Text>
+                Already have an account? <Text style={styles.linkHighlight}>Sign In</Text>
               </Text>
             </TouchableOpacity>
 
@@ -351,7 +307,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    marginBottom: 28,
+    marginBottom: 20,
   },
   errorBanner: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
