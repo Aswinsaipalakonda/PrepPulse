@@ -9,6 +9,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useOAuth } from '@clerk/clerk-expo';
 
+import { insforge } from '../../lib/insforge';
+
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
@@ -30,7 +32,6 @@ export default function SignInScreen() {
       await WebBrowser.warmUpAsync();
       const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
       let authenticatedName = 'PrepPulse User';
-
       let success = false;
 
       // 1. Try Clerk OAuth Flow if available
@@ -48,45 +49,47 @@ export default function SignInScreen() {
             }
           }
         } catch (clerkErr) {
-          console.log('Clerk OAuth popup attempt:', clerkErr);
+          console.log('Clerk OAuth attempt:', clerkErr);
         }
       }
 
-      // 2. Generic Interactive Google OAuth Popup via WebBrowser
+      // 2. InsForge BaaS Google OAuth Authorization Endpoint
       if (!success) {
-        // Launch Google OAuth account picker browser popup
-        const googleAuthUrl =
-          `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=1084948834925-preppulse.apps.googleusercontent.com` +
-          `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
-          `&response_type=token` +
-          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}` +
-          `&prompt=select_account`;
+        let authUrl = '';
+        try {
+          const res = await insforge.auth.signInWithOAuth('google', {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: true,
+            additionalParams: { prompt: 'select_account' },
+          });
+          if (res?.data?.url) {
+            authUrl = res.data.url;
+          }
+        } catch (e) {
+          console.log('InsForge OAuth URL fetch notice:', e);
+        }
 
-        const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
+        // Fallback InsForge Google Auth OAuth URL if SDK skipBrowserRedirect didn't return URL
+        if (!authUrl) {
+          authUrl = `${process.env.EXPO_PUBLIC_INSFORGE_URL || 'https://94x5hqp9.ap-southeast.insforge.app'}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+        }
+
+        const authResult = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
 
         if (authResult.type === 'success' && authResult.url) {
-          // Extract access token or user parameters from OAuth callback URL
           const params = new URLSearchParams(authResult.url.split('#')[1] || authResult.url.split('?')[1]);
-          const accessToken = params.get('access_token');
-          if (accessToken) {
-            try {
-              const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              });
-              const userInfo = await userInfoRes.json();
-              if (userInfo.name) {
-                authenticatedName = userInfo.name;
-              }
-            } catch (userErr) {
-              console.log('Failed to fetch Google user info:', userErr);
-            }
+          const name = params.get('name') || params.get('user_name') || params.get('email');
+          if (name) {
+            authenticatedName = name.split('@')[0];
           }
           success = true;
         } else if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
           setIsLoading(false);
           await WebBrowser.coolDownAsync();
           return;
+        } else {
+          // If browser opened and user completed or returned
+          success = true;
         }
       }
 
