@@ -14,7 +14,9 @@ import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
-const isExpoGo = Constants.appOwnership === 'expo';
+const isValidClerkKey =
+  publishableKey.length > 40 &&
+  (publishableKey.startsWith('pk_test_') || publishableKey.startsWith('pk_live_'));
 
 const tokenCache = {
   async getToken(key: string) {
@@ -39,8 +41,8 @@ export default function RootLayout() {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
-  // Use ClerkProvider whenever publishableKey is present
-  if (publishableKey) {
+  // Use ClerkProvider only when valid key is provided
+  if (isValidClerkKey) {
     return (
       <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
         <AppProvider>

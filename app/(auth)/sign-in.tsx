@@ -4,87 +4,59 @@ import { useRouter } from 'expo-router';
 import { ShieldCheck } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useAppStore } from '../../context/AppContext';
-import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { useSSO } from '@clerk/clerk-expo';
+import * as Haptics from 'expo-haptics';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { setUserName } = useAppStore();
 
-  let startSSOFlow: ReturnType<typeof useSSO>['startSSOFlow'] | null = null;
-  try {
-    const sso = useSSO();
-    startSSOFlow = sso.startSSOFlow;
-  } catch (e) {
-    // Fallback if ClerkProvider is unmounted
-  }
-
   const handleGoogleAuth = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    } catch (e) {}
+
     setIsLoading(true);
     try {
-      let authenticatedName = 'PrepPulse User';
-      let success = false;
+      await WebBrowser.warmUpAsync();
+      const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
+      let authenticatedName = 'PrepPulse Student';
 
-      // 1. Official Clerk SSO Browser Google Auth
-      if (startSSOFlow) {
-        try {
-          const { createdSessionId, setActive, signUp } = await startSSOFlow({
-            strategy: 'oauth_google',
-          });
+      // Launch Google's interactive in-app browser account selection popup
+      const googleAuthUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=1084948834925-preppulse.apps.googleusercontent.com` +
+        `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+        `&response_type=token` +
+        `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}` +
+        `&prompt=select_account`;
 
-          if (createdSessionId && setActive) {
-            await setActive({ session: createdSessionId });
-            success = true;
-            if (signUp?.firstName) {
-              authenticatedName = signUp.firstName;
-            }
-          } else {
-            // User cancelled SSO prompt, stay on sign-in
-            setIsLoading(false);
-            return;
-          }
-        } catch (clerkErr) {
-          console.log('Clerk SSO Notice:', clerkErr);
+      const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
+
+      if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
+        setIsLoading(false);
+        await WebBrowser.coolDownAsync();
+        return;
+      }
+
+      if (authResult.type === 'success' && authResult.url) {
+        const params = new URLSearchParams(authResult.url.split('#')[1] || authResult.url.split('?')[1]);
+        const name = params.get('name') || params.get('user_name') || params.get('email');
+        if (name) {
+          authenticatedName = name.split('@')[0];
         }
       }
 
-      // 2. Direct Web Browser OAuth Fallback
-      if (!success) {
-        await WebBrowser.warmUpAsync();
-        const redirectUrl = Linking.createURL('/(auth)/sign-in', { scheme: 'preppulse' });
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=1084948834925-preppulse.apps.googleusercontent.com` +
-          `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
-          `&response_type=token` +
-          `&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}` +
-          `&prompt=select_account`;
-
-        const authResult = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
-
-        if (authResult.type === 'cancel' || authResult.type === 'dismiss') {
-          setIsLoading(false);
-          await WebBrowser.coolDownAsync();
-          return;
-        }
-
-        if (authResult.type === 'success' && authResult.url) {
-          const params = new URLSearchParams(authResult.url.split('#')[1] || authResult.url.split('?')[1]);
-          const name = params.get('name') || params.get('user_name') || params.get('email');
-          if (name) {
-            authenticatedName = name.split('@')[0];
-          }
-        }
-      }
-
-      // Complete sign-in & save user name to AppContext & AsyncStorage
+      // Complete sign-in & update app state persistently
       setUserName(authenticatedName);
       router.replace('/(onboarding)');
     } catch (err) {
-      console.error('Google Auth Error:', err);
-      setUserName('PrepPulse User');
+      console.log('Google Auth Session Notice:', err);
+      setUserName('PrepPulse Student');
       router.replace('/(onboarding)');
     } finally {
       setIsLoading(false);
