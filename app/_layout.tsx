@@ -9,6 +9,10 @@ import { ClerkProvider } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -32,6 +36,7 @@ const tokenCache = {
 export default function RootLayout() {
   useEffect(() => {
     initOneSignal();
+    SplashScreen.hideAsync().catch(() => {});
   }, []);
 
   // Use ClerkProvider in standalone native builds only to prevent Expo Go web asset fetch errors

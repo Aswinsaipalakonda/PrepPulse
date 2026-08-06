@@ -7,6 +7,11 @@
     "icon": "./assets/logo.png",
     "scheme": "preppulse",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12131A"
+    },
     "plugins": [
       [
         "onesignal-expo-plugin",
