@@ -1,6 +1,13 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
-const config = getDefaultConfig(__dirname);
+const projectRoot = __dirname;
+const config = getDefaultConfig(projectRoot);
+
+config.projectRoot = projectRoot;
+config.watchFolders = [
+  projectRoot,
+];
 
 config.resolver.extraNodeModules = {
   crypto: require.resolve('crypto-browserify'),
@@ -10,3 +17,6 @@ config.resolver.extraNodeModules = {
 };
 
 module.exports = config;
+
+
+
