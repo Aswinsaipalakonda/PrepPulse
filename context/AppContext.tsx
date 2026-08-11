@@ -62,50 +62,6 @@ const STORAGE_KEYS = {
   PROJECTS: 'preppulse_projects',
 };
 
-const INITIAL_PROJECTS: ProjectItem[] = [
-  {
-    id: 'proj-1',
-    name: 'Campus Placement Portal',
-    category: 'Full-Stack PERN',
-    description: 'Full-Stack PERN & Java microservices capstone project configured for your 90-day placement roadmap.',
-    status: 'in_progress',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    updatedAt: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    todos: [
-      {
-        id: 'ptodo-1',
-        title: 'Design Database Schema for Auth & Students',
-        isCompleted: true,
-        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-      },
-      {
-        id: 'ptodo-2',
-        title: 'Setup REST API endpoints for Placement Drives',
-        isCompleted: false,
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-      },
-    ],
-  },
-  {
-    id: 'proj-2',
-    name: 'DSA Visualizer App',
-    category: 'React Native & Canvas',
-    description: 'Interactive visualization app for trees, graphs, and sorting algorithms built with React Native.',
-    status: 'planned',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    updatedAt: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    todos: [
-      {
-        id: 'ptodo-3',
-        title: 'Implement Binary Search Tree Animation',
-        isCompleted: false,
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-      },
-    ],
-  },
-];
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -113,11 +69,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [userNameState, setUserNameState] = useState<string>('');
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(SEEDED_90_DAYS);
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
-  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
   const [hasOnboardedState, setHasOnboardedState] = useState<boolean>(false);
   const [isDayStarted, setIsDayStarted] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
 
   // Load persistent state on mount
   React.useEffect(() => {

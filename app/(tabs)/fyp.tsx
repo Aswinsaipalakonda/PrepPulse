@@ -95,73 +95,91 @@ export default function ProjectsScreen() {
 
         {/* Projects Cards List */}
         <View style={styles.projectsList}>
-          {projects.map((proj) => {
-            const completedCount = proj.todos.filter((t) => t.isCompleted).length;
-            const totalCount = proj.todos.length;
-            const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-            return (
+          {projects.length === 0 ? (
+            <View style={styles.emptyProjectsCard}>
+              <FolderGit2 size={40} color="#D1D5DB" />
+              <Text style={styles.emptyProjectsTitle}>No Projects Created Yet</Text>
+              <Text style={styles.emptyProjectsSub}>
+                Tap the '+' icon above to add your first project and manage daily timestamped to-dos.
+              </Text>
               <TouchableOpacity
-                key={proj.id}
-                style={styles.projectCard}
-                activeOpacity={0.88}
-                onPress={() => setSelectedProject(proj)}
+                style={styles.addFirstProjBtn}
+                onPress={() => setShowAddProjectModal(true)}
               >
-                <View style={styles.cardTopRow}>
-                  <View style={styles.folderBadge}>
-                    <FolderGit2 size={22} color="#12131A" />
-                  </View>
-                  <View style={styles.cardHeaderInfo}>
-                    <Text style={styles.projectCategory}>{proj.category}</Text>
-                    <Text style={styles.projectName}>{proj.name}</Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.statusTag,
-                      proj.status === 'completed' && styles.statusCompleted,
-                      proj.status === 'in_progress' && styles.statusInProgress,
-                    ]}
-                  >
-                    <Text style={styles.statusTagText}>
-                      {proj.status.replace('_', ' ')}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.projectDesc} numberOfLines={2}>
-                  {proj.description || 'No detailed description provided.'}
-                </Text>
-
-                {/* Timestamps Row */}
-                <View style={styles.timestampRow}>
-                  <Text style={styles.timestampText}>
-                    📅 Created: {proj.createdAt}
-                  </Text>
-                </View>
-
-                {/* To-Do Progress Bar */}
-                <View style={styles.progressSection}>
-                  <View style={styles.progressHeaderRow}>
-                    <Text style={styles.progressLabel}>
-                      Project Tasks ({completedCount}/{totalCount})
-                    </Text>
-                    <Text style={styles.progressPct}>{pct}%</Text>
-                  </View>
-
-                  <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBarFill, { width: `${pct}%` }]} />
-                  </View>
-                </View>
-
-                <View style={styles.cardFooterRow}>
-                  <Text style={styles.openDetailText}>Tap to manage tasks & status</Text>
-                  <ChevronRight size={16} color="#9CA3AF" />
-                </View>
+                <Plus size={16} color="#FFFFFF" />
+                <Text style={styles.addFirstProjText}>Add Project</Text>
               </TouchableOpacity>
-            );
-          })}
+            </View>
+          ) : (
+            projects.map((proj) => {
+              const completedCount = proj.todos.filter((t) => t.isCompleted).length;
+              const totalCount = proj.todos.length;
+              const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+              return (
+                <TouchableOpacity
+                  key={proj.id}
+                  style={styles.projectCard}
+                  activeOpacity={0.88}
+                  onPress={() => setSelectedProject(proj)}
+                >
+                  <View style={styles.cardTopRow}>
+                    <View style={styles.folderBadge}>
+                      <FolderGit2 size={22} color="#12131A" />
+                    </View>
+                    <View style={styles.cardHeaderInfo}>
+                      <Text style={styles.projectCategory}>{proj.category}</Text>
+                      <Text style={styles.projectName}>{proj.name}</Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.statusTag,
+                        proj.status === 'completed' && styles.statusCompleted,
+                        proj.status === 'in_progress' && styles.statusInProgress,
+                      ]}
+                    >
+                      <Text style={styles.statusTagText}>
+                        {proj.status.replace('_', ' ')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.projectDesc} numberOfLines={2}>
+                    {proj.description || 'No detailed description provided.'}
+                  </Text>
+
+                  {/* Timestamps Row */}
+                  <View style={styles.timestampRow}>
+                    <Text style={styles.timestampText}>
+                      📅 Created: {proj.createdAt}
+                    </Text>
+                  </View>
+
+                  {/* To-Do Progress Bar */}
+                  <View style={styles.progressSection}>
+                    <View style={styles.progressHeaderRow}>
+                      <Text style={styles.progressLabel}>
+                        Project Tasks ({completedCount}/{totalCount})
+                      </Text>
+                      <Text style={styles.progressPct}>{pct}%</Text>
+                    </View>
+
+                    <View style={styles.progressBarBg}>
+                      <View style={[styles.progressBarFill, { width: `${pct}%` }]} />
+                    </View>
+                  </View>
+
+                  <View style={styles.cardFooterRow}>
+                    <Text style={styles.openDetailText}>Tap to manage tasks & status</Text>
+                    <ChevronRight size={16} color="#9CA3AF" />
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
+
       </ScrollView>
 
       {/* Add New Project Modal */}
@@ -657,5 +675,45 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+  emptyProjectsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  emptyProjectsTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#12131A',
+    marginTop: 6,
+  },
+  emptyProjectsSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    maxWidth: '85%',
+    lineHeight: 18,
+  },
+  addFirstProjBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#12131A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    marginTop: 10,
+  },
+  addFirstProjText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
 });
+
 
