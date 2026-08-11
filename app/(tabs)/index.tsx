@@ -66,31 +66,32 @@ export default function TodayScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Top Navigation */}
-        <View style={styles.topNav}>
-          <View style={styles.userProfile}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
-            </View>
-            <View>
-              <Text style={styles.greetingTitle}>{timeGreeting}</Text>
-              <Text style={styles.userName}>{userName} 👋</Text>
-            </View>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      {/* Top Header Dark Banner */}
+      <View style={styles.topNavDark}>
+        <View style={styles.userProfile}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
           </View>
-
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconCircle} onPress={handlePlusPress}>
-              <Plus size={20} color="#12131A" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconCircle} onPress={handleNotificationPress}>
-              <Bell size={20} color="#12131A" />
-            </TouchableOpacity>
+          <View>
+            <Text style={styles.greetingTitle}>{timeGreeting}</Text>
+            <Text style={styles.userName}>{userName} 👋</Text>
           </View>
         </View>
 
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.iconCircleDark} onPress={handlePlusPress}>
+            <Plus size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconCircleDark} onPress={handleNotificationPress}>
+            <Bell size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.heroHeading}>Let’s Make{"\n"}Today Productive</Text>
+
 
         <HeaderStats />
 
@@ -220,17 +221,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
-  container: {
-    padding: 20,
-    paddingBottom: 90,
-  },
-  topNav: {
+  topNavDark: {
+    backgroundColor: '#12131A',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   userProfile: {
     flexDirection: 'row',
@@ -238,45 +241,45 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#EAB308',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: '#12131A',
+    fontWeight: '900',
     fontSize: 18,
   },
   greetingTitle: {
-    fontSize: 13,
-    color: '#6B7280',
+    fontSize: 12,
+    color: '#9CA3AF',
     fontWeight: '600',
   },
   userName: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#12131A',
+    color: '#FFFFFF',
   },
   headerIcons: {
     flexDirection: 'row',
     gap: 10,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+  iconCircleDark: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
+  container: {
+    padding: 20,
+    paddingBottom: 110,
+  },
+
   heroHeading: {
     fontSize: 28,
     fontWeight: '800',

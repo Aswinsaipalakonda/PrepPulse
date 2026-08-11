@@ -26,26 +26,58 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { currentDay, userStats, userName } = useAppStore();
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
+    {
+      id: 'n-1',
+      title: '☀️ Daily Morning Focus Ready',
+      body: `Good morning ${userName}! Day ${currentDay} tasks are prepared for your 90-day placement agenda.`,
+      time: '08:00 AM',
+      type: 'reminder',
+      read: false,
+    },
+    {
+      id: 'n-2',
+      title: '🔥 Streak Preservation Alert',
+      body: `Keep your ${userStats.currentStreak}-day placement streak alive by completing 2 or more modules today.`,
+      time: '08:00 PM',
+      type: 'streak',
+      read: false,
+    },
+  ]);
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={20} color="#12131A" />
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Notification Center</Text>
-            <Text style={styles.headerSubtitle}>Push alerts, daily reminders & streak rewards</Text>
-          </View>
-        </View>
+  const handleTestPushTrigger = () => {
+    const newAlert: NotificationItem = {
+      id: `test-${Date.now()}`,
+      title: '🔔 Test Notification Triggered',
+      body: `Dynamic OneSignal notification reminder created successfully for ${userName}!`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'reminder',
+      read: false,
+    };
+    setNotifications([newAlert, ...notifications]);
+  };
 
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      {/* Top Header Dark Banner */}
+      <View style={styles.darkHeaderBanner}>
+        <TouchableOpacity style={styles.iconCircleDark} onPress={() => router.back()}>
+          <ArrowLeft size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        <Text style={styles.darkHeaderTitle}>Notification Center</Text>
+
+        <TouchableOpacity style={styles.testPushBtn} onPress={handleTestPushTrigger}>
+          <Sparkles size={16} color="#12131A" />
+          <Text style={styles.testPushText}>Test Push</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.container}>
         {/* Action Bar */}
         <View style={styles.actionBar}>
           <Text style={styles.unreadCount}>
@@ -96,41 +128,59 @@ export default function NotificationsScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+  darkHeaderBanner: {
+    backgroundColor: '#12131A',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    marginBottom: 10,
+  },
+  iconCircleDark: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  darkHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  testPushBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EAB308',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  testPushText: {
+    color: '#12131A',
+    fontSize: 12,
+    fontWeight: '800',
   },
   container: {
     flex: 1,
     paddingHorizontal: 20,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 10,
-    marginBottom: 16,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#12131A',
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
+
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',

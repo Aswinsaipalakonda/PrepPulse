@@ -1,10 +1,28 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Task, DayPlan, FYPMilestone, UserStats } from '../types/planner';
 import { SEEDED_90_DAYS, INITIAL_FYP_MILESTONES, INITIAL_USER_STATS } from '../constants/curriculum';
-import { syncTaskCompletionToInsForge } from '../lib/insforge';
+import { syncTaskCompletionToInsForge, syncCustomTaskToInsForge } from '../lib/insforge';
 import * as Haptics from 'expo-haptics';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface ProjectTodo {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface ProjectItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: 'planned' | 'in_progress' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  todos: ProjectTodo[];
+}
 
 interface AppContextType {
   currentDay: number;
@@ -14,6 +32,7 @@ interface AppContextType {
   dayPlans: DayPlan[];
   userStats: UserStats;
   fypMilestones: FYPMilestone[];
+  projects: ProjectItem[];
   hasOnboarded: boolean;
   setHasOnboarded: (val: boolean) => void;
   isDayStarted: boolean;
@@ -25,6 +44,11 @@ interface AppContextType {
   addFYPMilestone: (title: string, dueDate: string) => void;
   toggleFYPMilestoneStatus: (id: string) => void;
   deleteFYPMilestone: (id: string) => void;
+  addProject: (name: string, category: string, description: string) => void;
+  addProjectTodo: (projectId: string, title: string) => void;
+  toggleProjectTodo: (projectId: string, todoId: string) => void;
+  deleteProjectTodo: (projectId: string, todoId: string) => void;
+  updateProjectStatus: (projectId: string, status: 'planned' | 'in_progress' | 'completed') => void;
   resetProgram: () => void;
   isLoaded: boolean;
 }
@@ -33,7 +57,54 @@ const STORAGE_KEYS = {
   HAS_ONBOARDED: 'preppulse_has_onboarded',
   USER_NAME: 'preppulse_user_name',
   USER_STATS: 'preppulse_user_stats',
+  DAY_PLANS: 'preppulse_day_plans',
+  FYP_MILESTONES: 'preppulse_fyp_milestones',
+  PROJECTS: 'preppulse_projects',
 };
+
+const INITIAL_PROJECTS: ProjectItem[] = [
+  {
+    id: 'proj-1',
+    name: 'Campus Placement Portal',
+    category: 'Full-Stack PERN',
+    description: 'Full-Stack PERN & Java microservices capstone project configured for your 90-day placement roadmap.',
+    status: 'in_progress',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+    updatedAt: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+    todos: [
+      {
+        id: 'ptodo-1',
+        title: 'Design Database Schema for Auth & Students',
+        isCompleted: true,
+        createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+      },
+      {
+        id: 'ptodo-2',
+        title: 'Setup REST API endpoints for Placement Drives',
+        isCompleted: false,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+      },
+    ],
+  },
+  {
+    id: 'proj-2',
+    name: 'DSA Visualizer App',
+    category: 'React Native & Canvas',
+    description: 'Interactive visualization app for trees, graphs, and sorting algorithms built with React Native.',
+    status: 'planned',
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+    updatedAt: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+    todos: [
+      {
+        id: 'ptodo-3',
+        title: 'Implement Binary Search Tree Animation',
+        isCompleted: false,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+      },
+    ],
+  },
+];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -42,6 +113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [userNameState, setUserNameState] = useState<string>('');
   const [dayPlans, setDayPlans] = useState<DayPlan[]>(SEEDED_90_DAYS);
   const [fypMilestones, setFypMilestones] = useState<FYPMilestone[]>(INITIAL_FYP_MILESTONES);
+  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [userStats, setUserStats] = useState<UserStats>(INITIAL_USER_STATS);
   const [hasOnboardedState, setHasOnboardedState] = useState<boolean>(false);
   const [isDayStarted, setIsDayStarted] = useState<boolean>(false);
@@ -55,6 +127,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedOnboarded = await AsyncStorage.getItem(STORAGE_KEYS.HAS_ONBOARDED).catch(() => null);
         const savedName = await AsyncStorage.getItem(STORAGE_KEYS.USER_NAME).catch(() => null);
         const savedStats = await AsyncStorage.getItem(STORAGE_KEYS.USER_STATS).catch(() => null);
+        const savedPlans = await AsyncStorage.getItem(STORAGE_KEYS.DAY_PLANS).catch(() => null);
+        const savedMilestones = await AsyncStorage.getItem(STORAGE_KEYS.FYP_MILESTONES).catch(() => null);
+        const savedProjects = await AsyncStorage.getItem(STORAGE_KEYS.PROJECTS).catch(() => null);
 
         if (!isMounted) return;
 
@@ -69,8 +144,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setUserStats(JSON.parse(savedStats));
           } catch (e) {}
         }
+        if (savedPlans !== null) {
+          try {
+            const parsedPlans = JSON.parse(savedPlans);
+            if (Array.isArray(parsedPlans) && parsedPlans.length > 0) {
+              setDayPlans(parsedPlans);
+            }
+          } catch (e) {}
+        }
+        if (savedMilestones !== null) {
+          try {
+            const parsed = JSON.parse(savedMilestones);
+            if (Array.isArray(parsed)) setFypMilestones(parsed);
+          } catch (e) {}
+        }
+        if (savedProjects !== null) {
+          try {
+            const parsed = JSON.parse(savedProjects);
+            if (Array.isArray(parsed)) setProjects(parsed);
+          } catch (e) {}
+        }
       } catch (err) {
-        // Fallback gracefully without throwing
+        // Fallback gracefully
       } finally {
         if (isMounted) {
           setIsLoaded(true);
@@ -82,6 +177,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isMounted = false;
     };
   }, []);
+
+  const saveDayPlans = (plans: DayPlan[]) => {
+    setDayPlans(plans);
+    AsyncStorage.setItem(STORAGE_KEYS.DAY_PLANS, JSON.stringify(plans)).catch(() => {});
+  };
+
+  const saveFypMilestones = (milestones: FYPMilestone[]) => {
+    setFypMilestones(milestones);
+    AsyncStorage.setItem(STORAGE_KEYS.FYP_MILESTONES, JSON.stringify(milestones)).catch(() => {});
+  };
+
+  const saveProjects = (projs: ProjectItem[]) => {
+    setProjects(projs);
+    AsyncStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projs)).catch(() => {});
+  };
 
   const setHasOnboarded = (val: boolean) => {
     setHasOnboardedState(val);
@@ -95,10 +205,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const startDay = () => {
     setIsDayStarted(true);
-    setUserStats((prev) => ({
-      ...prev,
-      currentStreak: prev.currentStreak === 0 ? 1 : prev.currentStreak,
-    }));
+    setUserStats((prev) => {
+      const updated = {
+        ...prev,
+        currentStreak: prev.currentStreak === 0 ? 1 : prev.currentStreak,
+      };
+      AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
   };
 
   const toggleStartDay = () => {
@@ -108,9 +222,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleTaskCompletion = (taskId: string) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (e) {
-      // Ignore if web or not supported
-    }
+    } catch (e) {}
 
     setDayPlans((prevPlans) => {
       let taskWasCompleted = false;
@@ -125,7 +237,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { ...plan, tasks: updatedTasks };
       });
 
-      // Check completed tasks for current day
+      // Save to AsyncStorage
+      AsyncStorage.setItem(STORAGE_KEYS.DAY_PLANS, JSON.stringify(updatedPlans)).catch(() => {});
+
       const currentDayPlan = updatedPlans.find((p) => p.dayNumber === currentDay);
       const currentDayCompletedCount = currentDayPlan
         ? currentDayPlan.tasks.filter((t) => t.isCompleted).length
@@ -138,15 +252,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const newCompletedCount = Math.max(0, prev.completedTasksCount + countDiff);
         const newSolved = taskWasCompleted ? prev.solvedProblems + 1 : Math.max(0, prev.solvedProblems - 1);
 
-        // Update streak if at least 2 tasks of the day are completed
         const updatedStreak = currentDayCompletedCount >= 2
           ? Math.max(prev.currentStreak, 1)
           : (currentDayCompletedCount === 0 ? 0 : prev.currentStreak);
 
-        // Sync with InsForge Backend
         syncTaskCompletionToInsForge(taskId, taskWasCompleted, newTotalPoints);
 
-        return {
+        const updatedStats = {
           ...prev,
           currentStreak: updatedStreak,
           bestStreak: Math.max(prev.bestStreak, updatedStreak),
@@ -154,6 +266,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           completedTasksCount: newCompletedCount,
           solvedProblems: newSolved,
         };
+        AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify(updatedStats)).catch(() => {});
+        return updatedStats;
       });
 
       return updatedPlans;
@@ -174,22 +288,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isCompleted: false,
     };
 
-    setDayPlans((prevPlans) =>
-      prevPlans.map((plan) =>
+    // Sync to InsForge PostgreSQL
+    syncCustomTaskToInsForge(newTask);
+
+    setDayPlans((prevPlans) => {
+      const updatedPlans = prevPlans.map((plan) =>
         plan.dayNumber === currentDay
           ? { ...plan, tasks: [...plan.tasks, newTask] }
           : plan
-      )
-    );
+      );
+      AsyncStorage.setItem(STORAGE_KEYS.DAY_PLANS, JSON.stringify(updatedPlans)).catch(() => {});
+      return updatedPlans;
+    });
   };
 
   const updateTaskNotes = (taskId: string, notes: string) => {
-    setDayPlans((prevPlans) =>
-      prevPlans.map((plan) => ({
+    setDayPlans((prevPlans) => {
+      const updatedPlans = prevPlans.map((plan) => ({
         ...plan,
         tasks: plan.tasks.map((task) => (task.id === taskId ? { ...task, notes } : task)),
-      }))
-    );
+      }));
+      AsyncStorage.setItem(STORAGE_KEYS.DAY_PLANS, JSON.stringify(updatedPlans)).catch(() => {});
+      return updatedPlans;
+    });
   };
 
   const addFYPMilestone = (title: string, dueDate: string) => {
@@ -201,37 +322,128 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tasksCount: 1,
       completedTasksCount: 0,
     };
-    setFypMilestones((prev) => [...prev, newMilestone]);
+    const updated = [...fypMilestones, newMilestone];
+    saveFypMilestones(updated);
   };
 
   const toggleFYPMilestoneStatus = (id: string) => {
-    setFypMilestones((prev) =>
-      prev.map((m) => {
-        if (m.id === id) {
-          const nextStatus =
-            m.status === 'planned' ? 'in_progress' : m.status === 'in_progress' ? 'completed' : 'planned';
-          return {
-            ...m,
-            status: nextStatus,
-            completedTasksCount: nextStatus === 'completed' ? m.tasksCount : 0,
-          };
-        }
-        return m;
-      })
-    );
+    const updated: FYPMilestone[] = fypMilestones.map((m) => {
+      if (m.id === id) {
+        const nextStatus: FYPMilestone['status'] =
+          m.status === 'planned' ? 'in_progress' : m.status === 'in_progress' ? 'completed' : 'planned';
+        return {
+          ...m,
+          status: nextStatus,
+          completedTasksCount: nextStatus === 'completed' ? m.tasksCount : 0,
+        };
+      }
+      return m;
+    });
+    saveFypMilestones(updated);
   };
+
 
   const deleteFYPMilestone = (id: string) => {
-    setFypMilestones((prev) => prev.filter((m) => m.id !== id));
+    const updated = fypMilestones.filter((m) => m.id !== id);
+    saveFypMilestones(updated);
   };
 
+  // Projects Hub Actions
+  const addProject = (name: string, category: string, description: string) => {
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const newProj: ProjectItem = {
+      id: `proj-${Date.now()}`,
+      name,
+      category: category || 'General Project',
+      description,
+      status: 'planned',
+      createdAt: nowStr,
+      updatedAt: nowStr,
+      todos: [],
+    };
+    saveProjects([newProj, ...projects]);
+  };
+
+  const addProjectTodo = (projectId: string, title: string) => {
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const updated = projects.map((p) => {
+      if (p.id === projectId) {
+        const newTodo: ProjectTodo = {
+          id: `ptodo-${Date.now()}`,
+          title,
+          isCompleted: false,
+          createdAt: nowStr,
+        };
+        return {
+          ...p,
+          updatedAt: nowStr,
+          todos: [newTodo, ...p.todos],
+        };
+      }
+      return p;
+    });
+    saveProjects(updated);
+  };
+
+  const toggleProjectTodo = (projectId: string, todoId: string) => {
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const updated = projects.map((p) => {
+      if (p.id === projectId) {
+        const updatedTodos = p.todos.map((t) => {
+          if (t.id === todoId) {
+            const isComp = !t.isCompleted;
+            return {
+              ...t,
+              isCompleted: isComp,
+              completedAt: isComp ? nowStr : undefined,
+            };
+          }
+          return t;
+        });
+        return {
+          ...p,
+          updatedAt: nowStr,
+          todos: updatedTodos,
+        };
+      }
+      return p;
+    });
+    saveProjects(updated);
+  };
+
+  const deleteProjectTodo = (projectId: string, todoId: string) => {
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const updated = projects.map((p) => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          updatedAt: nowStr,
+          todos: p.todos.filter((t) => t.id !== todoId),
+        };
+      }
+      return p;
+    });
+    saveProjects(updated);
+  };
+
+  const updateProjectStatus = (projectId: string, status: 'planned' | 'in_progress' | 'completed') => {
+    const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    const updated = projects.map((p) => (p.id === projectId ? { ...p, status, updatedAt: nowStr } : p));
+    saveProjects(updated);
+  };
+
+  // Reset 90-day plan without logging out the authenticated user
   const resetProgram = () => {
     setDayPlans(SEEDED_90_DAYS);
     setFypMilestones(INITIAL_FYP_MILESTONES);
     setUserStats(INITIAL_USER_STATS);
-    setHasOnboarded(false);
     setIsDayStarted(false);
     setCurrentDay(1);
+
+    AsyncStorage.removeItem(STORAGE_KEYS.DAY_PLANS).catch(() => {});
+    AsyncStorage.removeItem(STORAGE_KEYS.FYP_MILESTONES).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEYS.USER_STATS, JSON.stringify(INITIAL_USER_STATS)).catch(() => {});
+    // CRITICAL FIX: Do NOT set hasOnboarded to false, preserving user auth session
   };
 
   return (
@@ -244,6 +456,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dayPlans,
         userStats,
         fypMilestones,
+        projects,
         hasOnboarded: hasOnboardedState,
         setHasOnboarded,
         isDayStarted,
@@ -255,6 +468,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addFYPMilestone,
         toggleFYPMilestoneStatus,
         deleteFYPMilestone,
+        addProject,
+        addProjectTodo,
+        toggleProjectTodo,
+        deleteProjectTodo,
+        updateProjectStatus,
         resetProgram,
         isLoaded,
       }}
@@ -271,3 +489,4 @@ export const useAppStore = () => {
   }
   return context;
 };
+

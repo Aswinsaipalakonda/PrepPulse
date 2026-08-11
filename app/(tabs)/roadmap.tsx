@@ -23,12 +23,14 @@ export default function RoadmapScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      {/* Top Header Dark Banner */}
+      <View style={styles.darkHeaderBanner}>
+        <Text style={styles.darkHeaderTitle}>90-Day Placement Roadmap</Text>
+      </View>
+
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>90-Day Placement Roadmap</Text>
-          <Text style={styles.headerSubtitle}>Structured curriculum from Day 1 to Day 90</Text>
-        </View>
+
 
         {/* Compact Horizontal Day Chips Picker */}
         <View style={styles.pickerWrapper}>
@@ -110,26 +112,28 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+  darkHeaderBanner: {
+    backgroundColor: '#12131A',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    marginBottom: 10,
+  },
+  darkHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#12131A',
-  },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginTop: 2,
-  },
+
   pickerWrapper: {
     height: 48,
     marginBottom: 12,

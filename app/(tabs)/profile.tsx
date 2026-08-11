@@ -94,12 +94,14 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      {/* Top Header Dark Banner */}
+      <View style={styles.darkHeaderBanner}>
+        <Text style={styles.darkHeaderTitle}>Profile & Placement Analytics</Text>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile & Analytics</Text>
-          <Text style={styles.headerSubtitle}>User settings, progress analytics & streak heatmap</Text>
-        </View>
+
 
         {/* User Profile Card */}
         <View style={styles.userCard}>
@@ -298,12 +300,28 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: Platform.OS === 'android' ? 36 : 0,
+  },
+  darkHeaderBanner: {
+    backgroundColor: '#12131A',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  darkHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   container: {
     padding: 20,
     paddingBottom: 110,
   },
+
   header: {
     marginBottom: 16,
   },

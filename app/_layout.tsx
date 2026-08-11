@@ -7,12 +7,22 @@ import { StatusBar } from 'expo-status-bar';
 import { initOneSignal } from '../lib/notifications';
 import * as SplashScreen from 'expo-splash-screen';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+try {
+  SplashScreen.preventAutoHideAsync().catch(() => {});
+} catch (e) {}
 
 export default function RootLayout() {
   useEffect(() => {
-    initOneSignal();
-    SplashScreen.hideAsync().catch(() => {});
+    try {
+      initOneSignal();
+    } catch (e) {
+      console.log('OneSignal init error guarded:', e);
+    }
+    try {
+      SplashScreen.hideAsync().catch(() => {});
+    } catch (e) {
+      console.log('Splash hide error guarded:', e);
+    }
   }, []);
 
   return (

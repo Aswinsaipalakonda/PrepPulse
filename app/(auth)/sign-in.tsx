@@ -255,7 +255,7 @@ export default function SignInScreen() {
 
             <View style={styles.securityRow}>
               <ShieldCheck size={16} color="#9CA3AF" />
-              <Text style={styles.securityText}>Secured by InsForge PostgreSQL Auth</Text>
+              <Text style={styles.securityText}>Secured by Aswin PostgreSQL Auth</Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>

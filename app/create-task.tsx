@@ -8,6 +8,7 @@ import {
   TextInput,
   Platform,
   Alert,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -49,27 +50,35 @@ export default function CreateTaskScreen() {
     }
 
     addNewCustomTask(title.trim(), track);
-    Alert.alert('Task Created 🎯', 'Your new task has been added successfully!');
+    Alert.alert('Task Created 🎯', 'Your new task has been added and saved!');
     router.back();
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top Header Bar */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconCircle} onPress={() => router.back()}>
-            <X size={20} color="#12131A" />
-          </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      {/* Top Header Dark Banner */}
+      <View style={styles.darkHeaderBanner}>
+        <TouchableOpacity style={styles.iconCircleDark} onPress={() => router.back()}>
+          <X size={20} color="#FFFFFF" />
+        </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Add New Task</Text>
+        <Text style={styles.darkHeaderTitle}>Add New Task</Text>
 
-          <TouchableOpacity style={styles.iconCircle} onPress={handleSave}>
-            <Check size={20} color="#12131A" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.iconCircleDark} onPress={handleSave}>
+          <Check size={20} color="#EAB308" />
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.form}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Task Title */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Task Title</Text>
@@ -192,7 +201,7 @@ export default function CreateTaskScreen() {
             <Text style={styles.submitBtnText}>Create Task</Text>
           </TouchableOpacity>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -201,35 +210,37 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5EBF0',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
-  container: {
-    flex: 1,
+  darkHeaderBanner: {
+    backgroundColor: '#12131A',
     paddingHorizontal: 20,
-  },
-  header: {
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
-    marginBottom: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+  iconCircleDark: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
   },
-  headerTitle: {
+  darkHeaderTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#12131A',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   form: {
-    paddingBottom: 40,
+    padding: 20,
+    paddingBottom: 80,
     gap: 14,
   },
   fieldGroup: {
@@ -247,6 +258,8 @@ const styles = StyleSheet.create({
     height: 52,
     fontSize: 15,
     color: '#12131A',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   textArea: {
     height: 100,
@@ -266,6 +279,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   pickerInput: {
     flex: 1,
@@ -313,6 +328,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   selectInput: {
     flex: 1,
@@ -379,3 +396,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+

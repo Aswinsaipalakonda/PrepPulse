@@ -31,6 +31,31 @@ export async function syncTaskCompletionToInsForge(taskId: string, isCompleted: 
 }
 
 /**
+ * Sync custom tasks to InsForge PostgreSQL database
+ */
+export async function syncCustomTaskToInsForge(task: Task) {
+  try {
+    if (insforge && insforge.database) {
+      await insforge.database.from('custom_tasks').insert([
+        {
+          task_id: task.id,
+          day_number: task.dayNumber,
+          track: task.track,
+          title: task.title,
+          concept_summary: task.conceptSummary,
+          duration_minutes: task.durationMinutes,
+          difficulty: task.difficulty,
+          is_completed: task.isCompleted,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+  } catch (error) {
+    // Graceful fallback
+  }
+}
+
+/**
  * Fetch 90-day placement curriculum from InsForge or fallback to seeded roadmap
  */
 export async function fetchInsForgeCurriculum(): Promise<DayPlan[]> {
@@ -46,3 +71,4 @@ export async function fetchInsForgeCurriculum(): Promise<DayPlan[]> {
   }
   return SEEDED_90_DAYS;
 }
+
