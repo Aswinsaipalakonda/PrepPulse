@@ -1,13 +1,19 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
+const crypto = require('crypto');
+const fs = require('fs');
 
-const projectRoot = __dirname;
-const config = getDefaultConfig(projectRoot);
+const config = getDefaultConfig(__dirname);
 
-config.projectRoot = projectRoot;
-config.watchFolders = [
-  projectRoot,
-];
+// Override Metro SHA-1 getter to handle nested OneDrive file paths reliably on Windows
+config.serializer = config.serializer || {};
+config.serializer.getSha1 = (filePath) => {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    return crypto.createHash('sha1').update(buffer).digest('hex');
+  } catch (e) {
+    return '0000000000000000000000000000000000000000';
+  }
+};
 
 config.resolver.extraNodeModules = {
   crypto: require.resolve('crypto-browserify'),
@@ -17,6 +23,7 @@ config.resolver.extraNodeModules = {
 };
 
 module.exports = config;
+
 
 
 
