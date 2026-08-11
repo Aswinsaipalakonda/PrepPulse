@@ -2,29 +2,29 @@ const { getDefaultConfig } = require('expo/metro-config');
 const crypto = require('crypto');
 const fs = require('fs');
 
-// Patch Metro DependencyGraph.prototype.getOrComputeSha1 so SHA-1 calculation never throws on Windows OneDrive paths
+// Patch metro-file-map TreeFS prototype so SHA-1 calculation never throws for virtual or un-watched modules
 try {
-  const DependencyGraph = require('metro/src/node-haste/DependencyGraph');
-  if (DependencyGraph && DependencyGraph.prototype) {
-    const origGetSha1 = DependencyGraph.prototype.getOrComputeSha1;
-    DependencyGraph.prototype.getOrComputeSha1 = async function (mixedPath) {
+  const TreeFS = require('metro-file-map/src/lib/TreeFS').default || require('metro-file-map/src/lib/TreeFS');
+  if (TreeFS && TreeFS.prototype) {
+    const origTreeFSGetSha1 = TreeFS.prototype.getOrComputeSha1;
+    TreeFS.prototype.getOrComputeSha1 = async function (mixedPath) {
       try {
-        const res = await origGetSha1.call(this, mixedPath);
+        const res = await origTreeFSGetSha1.call(this, mixedPath);
         if (res && res.sha1) return res;
-      } catch (e) {
-        // Fallback calculation directly from filesystem
-      }
+      } catch (e) {}
+
       try {
-        if (fs.existsSync(mixedPath)) {
+        if (typeof mixedPath === 'string' && fs.existsSync(mixedPath)) {
           const content = fs.readFileSync(mixedPath);
           const sha1 = crypto.createHash('sha1').update(content).digest('hex');
           return { sha1 };
         }
       } catch (err) {}
+
       return { sha1: '0000000000000000000000000000000000000000' };
     };
   }
-} catch (err) {
+} catch (e) {
   // Guard
 }
 
@@ -38,6 +38,7 @@ config.resolver.extraNodeModules = {
 };
 
 module.exports = config;
+
 
 
 
