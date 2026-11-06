@@ -169,7 +169,7 @@ You can generate the standalone release `.apk` directly on Windows/Linux using G
 
 You can download the ready-to-install Android APK directly from GitHub Releases:
 
-👉 [**Download PrepPulse v1.0.0 APK**](https://github.com/Aswinsaipalakonda/PrepPulse/releases)
+👉 [**Download PrepPulse v1.0.1 APK**](https://github.com/Aswinsaipalakonda/PrepPulse/releases)
 
 ---
 
